@@ -1,5 +1,7 @@
 from django.db import models
 
+# Create your models here.
+
 #En la libreria models existe el metodo superclase Model que 
 #nos permite que esta clase Persona se convierta en una tabla de datos PostgreSQL
 #Basicamente con esto Django nos convierte la clase en una tabla de la BBDD, hace la conexion por nosotros
@@ -22,7 +24,7 @@ class Persona(models.Model):
     class meta:
         db_table = 'persona'
     
-    def __str__(self);
+    def __str__(self):
         return f"{self.nom} {self.cognoms}"
     
 class Metge(Persona):
@@ -70,3 +72,4 @@ class Prescripcio(models.Model):
     frequencia = models.CharField(max_length = 60)
     durada = models.CharField(max_length = 60)
     estat = models.CharField(max_length = 20)
+    
