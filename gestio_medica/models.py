@@ -21,20 +21,37 @@ class Persona(models.Model):
     adreca = models.CharField(max_length = 200)
     correu = models.CharField(max_length = 120, unique = True)
 
-    class meta:
+    class Meta:
+        managed = False #Esto es para que Django no cree una nueva tabla, ya existe la nuestra
         db_table = 'persona'
     
     def __str__(self):
         return f"{self.nom} {self.cognoms}"
     
 class Metge(Persona):
+    persona_ptr = models.OneToOneField(
+        Persona,
+        on_delete=models.CASCADE, # Requerido por Django en Python, no tocará PostgreSQL
+        parent_link=True,
+        db_column='dni',          # Nombre real de la columna FK en la tabla 'metge'
+        primary_key=True          # El DNI también actúa como PK de esta tabla heredada
+    )
     num_collegiat = models.CharField(max_length = 15, unique = True)
     
-    class meta:
+    class Meta:
+        managed = False 
         db_table = 'metge'
 
 class Pacient(Persona):
-    class meta:
+    persona_ptr = models.OneToOneField(
+        Persona,
+        on_delete=models.CASCADE, # Requerido por Django en Python
+        parent_link=True,
+        db_column='dni',          # Nombre real de la columna FK en la tabla 'pacient'
+        primary_key=True          # El DNI también actúa como PK aquí
+    )
+    class Meta:
+        managed = False 
         db_table = 'pacient'
 
 class Medicament(models.Model):
@@ -42,7 +59,8 @@ class Medicament(models.Model):
     nom_comercial = models.CharField(max_length = 150)
     principi_actiu = models.CharField(max_length = 150)
 
-    class meta:
+    class Meta:
+        managed = False 
         db_table = 'medicament'
 
     def __str__(self):
@@ -57,7 +75,8 @@ class Tractament(models.Model):
     # temporalmente porque esta clase no forma parte del rango inicial
     # de 4 - 5 clases. Si las añadieramos, tendriamos que enlazar sus relaciones 
     # y picar más código innecesario. 
-    class meta:
+    class Meta:
+        managed = False 
         db_table = 'tractament'
 
     def __str__(self):
@@ -72,4 +91,8 @@ class Prescripcio(models.Model):
     frequencia = models.CharField(max_length = 60)
     durada = models.CharField(max_length = 60)
     estat = models.CharField(max_length = 20)
+
+    class Meta:
+        managed = False
+        db_table = 'prescripcio'
     

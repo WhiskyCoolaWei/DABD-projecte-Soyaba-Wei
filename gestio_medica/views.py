@@ -17,6 +17,8 @@ from .use_cases.metge.crearMetge import crearMetge
 def crearMetgeController(request):
     #Aqui definimos el controlador que recibe el request, manda al caso de uso
     #El ENDPOINT lo configuramos en urls.py
+
+    # Desde el front se envia en html, se convierte con javascript a json y lo recibimos en back el json.
     # y devuelve el response a front
 
     if request.method != 'POST':
@@ -33,7 +35,7 @@ def crearMetgeController(request):
             dni = dades['dni'],
             nom = dades['nom'],
             cognoms = dades['cognoms'],
-            data_naixement = dades['data_naixement'],
+            data_naixement = dataNaixement,
             telefon = dades['telefon'],
             adreca = dades['adreca'],
             correu = dades['correu'],
@@ -42,7 +44,7 @@ def crearMetgeController(request):
     #Si todo va bien devolvemos el response a front
         return JsonResponse({
             "status": "èxit",
-            "missatge": f"Metge {nmetge.persona.nom} creat correctament amb ID {nmetge.id}"
+            "missatge": f"Metge {nmetge.nom} creat correctament amb ID {nmetge.pk}"
         }, status=201) # 201 significa "Created" en HTTP
     
     except ValueError as e:
