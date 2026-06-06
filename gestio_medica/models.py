@@ -65,16 +65,40 @@ class Medicament(models.Model):
 
     def __str__(self):
         return self.nom_comercial
+    
 
+#NUEVA CLASE IMPELEMENTADA
+class Diagnostic(models.Model):
+    codi_diagnostic = models.CharField(max_length = 15, primary_key = True)
+    descripcio = models.TextField()
+    notes_cliniques = models.TextField(blank = True, null = True)
+
+    #La clase cita no esta implementado, asi que para evitar errores lo 
+    #dejaremos en un varchar temporal
+    codi_cita = models.CharField(max_length = 15)
+
+    class Meta:
+        managed = False
+        db_table = 'diagnostic'
+
+    def __str__(self):
+        return self.codi_diagnostic
+    
+
+    
 class Tractament(models.Model):
     codi_tractament = models.CharField(max_length = 15, primary_key = True)
     data_inici = models.DateField()
     data_fi_prevista = models.DateField()
     indicacions = models.TextField(blank = True, null = True)
-    # Aqui nos falta el atributo de codi_diagnostic. No lo añadimos
-    # temporalmente porque esta clase no forma parte del rango inicial
-    # de 4 - 5 clases. Si las añadieramos, tendriamos que enlazar sus relaciones 
-    # y picar más código innecesario. 
+
+    #añadimos diagnostic
+    diagnostic = models.ForeignKey(
+        Diagnostic,
+        on_delete = models.CASCADE,
+        db_column = 'codi_diagnostic'
+    )
+
     class Meta:
         managed = False 
         db_table = 'tractament'
@@ -95,4 +119,4 @@ class Prescripcio(models.Model):
     class Meta:
         managed = False
         db_table = 'prescripcio'
-    
+

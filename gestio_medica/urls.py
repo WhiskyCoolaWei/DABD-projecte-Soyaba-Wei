@@ -1,5 +1,10 @@
 from django.urls import path
+
+
 from gestio_medica.views.viewsMetge import crearMetgeController
+from gestio_medica.views.viewsTractament import crearTractamentController
+
+
 from django.urls import path, include
 urlpatterns = [
     # Cuando alguien entre en la URL raíz de la app, cargará la vista 'inicio'
@@ -10,7 +15,7 @@ urlpatterns = [
                 #ENDPOINTS PARA CASOS DE USO
     path('metges/', crearMetgeController, name = 'CrearMetge'),
 
-
+    path('tractaments/', crearTractamentController, name = 'crearTractament'),
     #======================================================================
     #======================================================================
 ]
