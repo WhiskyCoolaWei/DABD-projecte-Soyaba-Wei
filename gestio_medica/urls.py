@@ -3,7 +3,7 @@ from django.urls import path
 
 from gestio_medica.views.viewsMetge import crearMetgeController
 from gestio_medica.views.viewsTractament import crearTractamentController
-
+from gestio_medica.views.viewsTractament import consultarTractamentController
 
 from django.urls import path, include
 urlpatterns = [
@@ -16,6 +16,8 @@ urlpatterns = [
     path('metges/', crearMetgeController, name = 'CrearMetge'),
 
     path('tractaments/', crearTractamentController, name = 'crearTractament'),
+
+    path('tractaments/consultar/', consultarTractamentController, name='ConsultarTractament'),
     #======================================================================
     #======================================================================
 ]

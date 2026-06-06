@@ -2,6 +2,42 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gestio_medica.use_cases.tractament.crearTractament import crearTractament
+from gestio_medica.use_cases.tractament.consultarTractament import consultarTractament
+
+@csrf_exempt
+def consultarTractamentController(request):
+    if request.method != 'GET':
+        return JsonResponse({"status": "error", "missatge": "Mètode no permès. Requerit GET"}, status=405)
+    
+    try:
+        codi_tractament = request.GET.get('codi_tractament')
+        
+        if not codi_tractament:
+             return JsonResponse({
+                 "status": "error_validacio", 
+                 "missatge": "Falta el paràmetre obligatori: codi_tractament"
+             }, status=400)
+        
+        dades_tractament = consultarTractament(codi_tractament)
+        
+        return JsonResponse({
+            "status": "èxit",
+            "missatge": "Tractament trobat correctament.",
+            "data": dades_tractament
+        }, status=200) 
+        
+    except ValueError as e:
+        return JsonResponse({
+            "status": "error_negoci",
+            "missatge": str(e)
+        }, status=404)
+        
+    except Exception as e:
+        return JsonResponse({
+            "status": "error_intern",
+            "missatge": f"Error intern del servidor: {str(e)}"
+        }, status=500)
+
 
 @csrf_exempt
 def crearTractamentController(request):
