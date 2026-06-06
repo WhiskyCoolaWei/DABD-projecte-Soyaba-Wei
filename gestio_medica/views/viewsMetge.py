@@ -7,7 +7,7 @@ from datetime import datetime
 # ==================================================
 #   IMPORTAMOS LOS METODOS DEFINIDOS, LOS CASOS DE USO.
 
-from .use_cases.metge.crearMetge import crearMetge
+from ..use_cases.metge.crearMetge import crearMetge
 
 
 # ==================================================
