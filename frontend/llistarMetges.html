@@ -2,15 +2,33 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <title>Llistat de Metges</title>
+    <title>Gestió de Metges - Paginació i Ordre</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 40px; display: flex; flex-direction: column; align-items: center; }
         .table-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 80%; max-width: 900px; }
         h2 { color: #2c3e50; text-align: center; margin-top: 0; margin-bottom: 25px; }
+        
+        .filter-box { display: flex; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px; align-items: flex-end; border: 1px solid #e4e7ed; }
+        .input-group { display: flex; flex-direction: column; flex: 1; }
+        .input-group label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .input-group input { padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; }
+        
+        button { padding: 11px 25px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 38px; }
+        button:hover { background-color: #2980b9; }
+        button.btn-clear { background-color: #909399; }
+        button.btn-clear:hover { background-color: #73767a; }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #2c3e50; font-weight: 600; }
+        th { background-color: #f8f9fa; color: #2c3e50; font-weight: 600; cursor: pointer; user-select: none; }
+        th:hover { background-color: #eef2f5; color: #3498db; }
         tr:hover { background-color: #f1f5f9; }
+        
+        .pagination-box { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 25px; }
+        .pagination-box button { height: auto; padding: 8px 16px; background-color: #fff; color: #3498db; border: 1px solid #3498db; }
+        .pagination-box button:disabled { color: #c0c4cc; border-color: #e4e7ed; cursor: not-allowed; }
+        .pagination-box button:not(:disabled):hover { background-color: #3498db; color: #fff; }
+        
         .loading { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
     </style>
 </head>
@@ -19,29 +37,61 @@
 <div class="table-container">
     <h2>Especialistes del Sistema</h2>
     
+    <div class="filter-box">
+        <div class="input-group">
+            <label>Filtrar per Nom:</label>
+            <input type="text" id="filtre_nom" placeholder="Ex: Joan">
+        </div>
+        <div class="input-group">
+            <label>Filtrar per Cognoms:</label>
+            <input type="text" id="filtre_cognoms" placeholder="Ex: Garcia">
+        </div>
+        <button type="button" id="btnFiltrar">Filtrar</button>
+        <button type="button" class="btn-clear" id="btnNetejar">Netejar</button>
+    </div>
+    
     <table>
         <thead>
             <tr>
-                <th>DNI</th>
-                <th>Nom</th>
-                <th>Cognoms</th>
-                <th>Núm. Col·legiat</th>
+                <th id="th_dni">DNI ↕</th>
+                <th id="th_nom">Nom ↕</th>
+                <th id="th_cognoms">Cognoms ↕</th>
+                <th id="th_collegiat">Núm. Col·legiat ↕</th>
             </tr>
         </thead>
         <tbody id="taula_metges">
             <tr>
-                <td colspan="4" class="loading">Carregant metges des del servidor...</td>
+                <td colspan="4" class="loading">Carregant metges...</td>
             </tr>
         </tbody>
     </table>
+
+    <div class="pagination-box">
+        <button id="btnPrev" disabled>Anterior</button>
+        <span id="infoPagina">Pàgina 1 de 1</span>
+        <button id="btnNext" disabled>Següent</button>
+    </div>
 </div>
 
 <script>
-async function carregarLlistaMetges() {
+let paginaActual = 1;
+let ordreActual = ''; // Guarda el camp ordenat actualment ('nom', '-nom', etc.)
+
+async function carregarDades() {
     const taulaBody = document.getElementById('taula_metges');
+    taulaBody.innerHTML = '<tr><td colspan="4" class="loading">Cercant metges...</td></tr>';
+    
+    const nom = document.getElementById('filtre_nom').value.trim();
+    const cognoms = document.getElementById('filtre_cognoms').value.trim();
     
     try {
-        const resposta = await fetch('http://127.0.0.1:8000/metges/');
+        const params = new URLSearchParams();
+        params.append('pagina', paginaActual);
+        if (nom) params.append('nom', nom);
+        if (cognoms) params.append('cognoms', cognoms);
+        if (ordreActual) params.append('ordenar_per', ordreActual);
+
+        const resposta = await fetch(`http://127.0.0.1:8000/metges/?${params.toString()}`);
         const dada = await resposta.json();
         
         taulaBody.innerHTML = ''; 
@@ -57,16 +107,69 @@ async function carregarLlistaMetges() {
                 `;
                 taulaBody.appendChild(fila);
             });
+            
+            // Actualitzem l'estat dels botons de paginació
+            document.getElementById('infoPagina').textContent = `Pàgina ${dada.paginacio.pagina_actual} de ${dada.paginacio.total_pagines}`;
+            document.getElementById('btnPrev').disabled = !dada.paginacio.te_anterior;
+            document.getElementById('btnNext').disabled = !dada.paginacio.te_seguent;
         } else {
-            taulaBody.innerHTML = '<tr><td colspan="4" class="loading">No hi ha metges registrats a la base de dades.</td></tr>';
+            taulaBody.innerHTML = '<tr><td colspan="4" class="loading">No s\'ha trobat cap metge.</td></tr>';
+            document.getElementById('infoPagina').textContent = 'Pàgina 1 de 1';
+            document.getElementById('btnPrev').disabled = true;
+            document.getElementById('btnNext').disabled = true;
         }
     } catch (e) {
         taulaBody.innerHTML = '<tr><td colspan="4" style="color: red; text-align: center;">❌ Error de connexió amb el servidor.</td></tr>';
     }
 }
 
-// Cridem la funció automàticament en carregar la pàgina
-window.onload = carregarLlistaMetges;
+// Funció per gestionar l'ordre en clicar una capçalera
+function gestionarOrdre(camp) {
+    if (ordreActual === camp) {
+        ordreActual = `-${camp}`; // Passa a descendent (ex: -nom)
+    } else if (ordreActual === `-${camp}`) {
+        ordreActual = ''; // Torna a l'estat inicial sense ordre
+    } else {
+        ordreActual = camp; // Passa a ascendent (ex: nom)
+    }
+    paginaActual = 1; // Sempre que s'ordena, tornem a la primera pàgina per veure els top resultats
+    carregarDades();
+}
+
+// Esdeveniments de Capçaleres (<th>)
+document.getElementById('th_dni').addEventListener('click', () => gestionarOrdre('dni'));
+document.getElementById('th_nom').addEventListener('click', () => gestionarOrdre('nom'));
+document.getElementById('th_cognoms').addEventListener('click', () => gestionarOrdre('cognoms'));
+document.getElementById('th_collegiat').addEventListener('click', () => gestionarOrdre('num_collegiat'));
+
+// Esdeveniments de Filtres
+document.getElementById('btnFiltrar').addEventListener('click', () => {
+    paginaActual = 1;
+    carregarDades();
+});
+
+document.getElementById('btnNetejar').addEventListener('click', () => {
+    document.getElementById('filtre_nom').value = '';
+    document.getElementById('filtre_cognoms').value = '';
+    ordreActual = '';
+    paginaActual = 1;
+    carregarDades();
+});
+
+// Esdeveniments de Paginació
+document.getElementById('btnPrev').addEventListener('click', () => {
+    if (paginaActual > 1) {
+        paginaActual--;
+        carregarDades();
+    }
+});
+
+document.getElementById('btnNext').addEventListener('click', () => {
+    paginaActual++;
+    carregarDades();
+});
+
+window.onload = () => carregarDades();
 </script>
 
 </body>
