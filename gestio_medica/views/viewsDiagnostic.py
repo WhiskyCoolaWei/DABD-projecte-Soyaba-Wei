@@ -2,9 +2,32 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gestio_medica.use_cases.diagnostic.crearDiagnostic import crearDiagnostic
+from gestio_medica.use_cases.diagnostic.consultarDiagnostic import consultarDiagnosticPerCodi
 
 @csrf_exempt
 def crearDiagnosticController(request):
+
+    if request.method == 'GET':
+        codi = request.GET.get('codi_diagnostic')
+        
+        if not codi:
+            return JsonResponse({"status": "error_validacio", "missatge": "Falta el paràmetre 'codi_diagnostic'"}, status=400)
+            
+        try:
+            d = consultarDiagnosticPerCodi(codi)
+            return JsonResponse({
+                "status": "èxit",
+                "diagnostic": {
+                    "codi_diagnostic": d.codi_diagnostic,
+                    "codi_cita": d.codi_cita_id,               # Relació amb la Cita
+                    "descripcio": d.descripcio,
+                }
+            }, status=200)
+        except ValueError as e:
+            return JsonResponse({"status": "error_negoci", "missatge": str(e)}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error_intern", "missatge": str(e)}, status=500)
+        
     if request.method != 'POST':
         return JsonResponse({"status": "error", "missatge": "Mètode no permès"}, status=405)
     

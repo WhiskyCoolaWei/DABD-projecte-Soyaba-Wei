@@ -96,10 +96,12 @@ class Diagnostic(models.Model):
     descripcio = models.TextField()
     notes_cliniques = models.TextField(blank = True, null = True)
 
-    #La clase cita no esta implementado, asi que para evitar errores lo 
-    #dejaremos en un varchar temporal
-    codi_cita = models.ForeignKey(Cita, on_delete = models.CASCADE, db_column = 'dni_metge')
-
+    # Relación real con la tabla Cita
+    codi_cita = models.ForeignKey(
+        Cita, 
+        on_delete = models.CASCADE, 
+        db_column = 'codi_cita'
+    )
     class Meta:
         managed = False
         db_table = 'diagnostic'
