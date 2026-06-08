@@ -9,6 +9,7 @@ from datetime import datetime
 
 from ..use_cases.metge.crearMetge import crearMetge
 from gestio_medica.use_cases.metge.consultarMetge import consultarMetgePerDni
+from gestio_medica.use_cases.metge.llistarMetges import llistarMetges 
 
 # ==================================================
 # ==================================================
@@ -32,6 +33,18 @@ def crearMetgeController(request):
                     }
                 }, status=200)
             
+            else:
+                # Retorna tota la llista
+                metges = llistarMetges()
+                llista = []
+                for m in metges:
+                    llista.append({
+                        "dni": m.dni,
+                        "nom": m.nom,
+                        "cognoms": m.cognoms,
+                        "num_collegiat": m.num_collegiat
+                    })
+                return JsonResponse({"status": "èxit", "metges": llista}, status=200)
                 
         except ValueError as e:
             return JsonResponse({"status": "error_negoci", "missatge": str(e)}, status=404)
