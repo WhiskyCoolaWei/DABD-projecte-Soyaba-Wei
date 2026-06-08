@@ -67,7 +67,30 @@ class Medicament(models.Model):
         return self.nom_comercial
     
 
-#NUEVA CLASE IMPELEMENTADA
+class Cita(models.Model):
+    ESTAT = [
+        ('pendent', 'pendent'),
+        ('confirmada','confirmada'),
+        ('finalitzada','finalitzada'),
+        ('cancelada','cancelada'),
+    ]
+
+    codi_cita = models.CharField(max_length = 15, primary_key = True)
+    data = models.DateField()
+    hora = models.TimeField()
+    estat = models.CharField(max_length = 50, choices = ESTAT)
+    dni_metge = models.ForeignKey('Metge', on_delete=models.CASCADE, db_column='dni_metge')
+    dni_pacient = models.CharField(max_length=9)
+    codi_centre = models.CharField(max_length=15)
+    codi_sala = models.CharField(max_length=15)
+
+    class Meta:
+        managed = False
+        db_table = 'cita'
+        
+    def __str__(self):
+        return self.codi_cita
+
 class Diagnostic(models.Model):
     codi_diagnostic = models.CharField(max_length = 15, primary_key = True)
     descripcio = models.TextField()
@@ -75,7 +98,7 @@ class Diagnostic(models.Model):
 
     #La clase cita no esta implementado, asi que para evitar errores lo 
     #dejaremos en un varchar temporal
-    codi_cita = models.CharField(max_length = 15)
+    codi_cita = models.ForeignKey(Cita, on_delete = models.CASCADE, db_column = 'dni_metge')
 
     class Meta:
         managed = False
