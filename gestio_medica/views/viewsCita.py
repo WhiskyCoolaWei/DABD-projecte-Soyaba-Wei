@@ -4,10 +4,39 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gestio_medica.use_cases.cita.crearCita import crearCita
+from gestio_medica.use_cases.cita.consultarCita import consultarCita
 
 @csrf_exempt
 def crearCitaController(request):
-    if request.method != 'POST':
+
+    if request.method == 'GET':
+        codi_cita = request.GET.get('codi_cita')
+        
+        if not codi_cita:
+            return JsonResponse({"status": "error_validacio", "missatge": "Falta el paràmetre codi_cita"}, status=400)
+            
+        try:
+            cita = consultarCita(codi_cita)
+            return JsonResponse({
+                "status": "èxit",
+                "cita": {
+                    "codi_cita": cita.codi_cita,
+                    "data": str(cita.data),
+                    "hora": str(cita.hora),
+                    "estat": cita.estat,
+                    "dni_metge": cita.dni_metge.dni,
+                    "dni_pacient": cita.dni_pacient,
+                    "codi_centre": cita.codi_centre,
+                    "codi_sala": cita.codi_sala
+                }
+            }, status=200)
+        except ValueError as e:
+            return JsonResponse({"status": "error_negoci", "missatge": str(e)}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error_intern", "missatge": str(e)}, status=500)
+        
+
+    elif request.method != 'POST':
         return JsonResponse({"status": "error", "missatge": "Mètode no permès"}, status=405)
     
     try:
