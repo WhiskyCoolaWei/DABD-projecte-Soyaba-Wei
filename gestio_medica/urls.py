@@ -7,6 +7,7 @@ from gestio_medica.views.viewsTractament import consultarTractamentController
 from gestio_medica.views.viewsDiagnostic import crearDiagnosticController
 from gestio_medica.views.viewsCita import crearCitaController
 from gestio_medica.views.viewsPrescripcio import prescripcioController
+from gestio_medica.views.viewsPacient import pacientController
 
 from django.urls import path, include
 urlpatterns = [
@@ -28,6 +29,7 @@ urlpatterns = [
 
     path('prescripcions/', prescripcioController, name='Prescripcio'),
 
+    path('pacients/', pacientController, name='gestio_pacients'),
     #======================================================================
     #======================================================================
 ]
