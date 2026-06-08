@@ -8,7 +8,7 @@ from gestio_medica.views.viewsDiagnostic import crearDiagnosticController
 from gestio_medica.views.viewsCita import crearCitaController
 from gestio_medica.views.viewsPrescripcio import prescripcioController
 from gestio_medica.views.viewsPacient import pacientController
-
+from gestio_medica.views.viewsHistorialClinic import historialClinicController
 from django.urls import path, include
 urlpatterns = [
     # Cuando alguien entre en la URL raíz de la app, cargará la vista 'inicio'
@@ -30,6 +30,8 @@ urlpatterns = [
     path('prescripcions/', prescripcioController, name='Prescripcio'),
 
     path('pacients/', pacientController, name='gestio_pacients'),
+
+    path('historial/', historialClinicController, name='consultar_historial'),
     #======================================================================
     #======================================================================
 ]

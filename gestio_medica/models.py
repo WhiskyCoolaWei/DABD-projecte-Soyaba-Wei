@@ -152,3 +152,14 @@ class Prescripcio(models.Model):
     def __str__(self):
         return f"Prescripció {self.codi_prescripcio} - Tractament {self.codi_tractament}"
 
+class HistorialClinic(models.Model):
+    codi_historial = models.CharField(max_length =15, primary_key =True)
+    dni_pacient = models.OneToOneField('Pacient', on_delete = models.CASCADE, db_column ='dni_pacient')
+    allergies = models.TextField(blank = True, null = True)
+    grup_sanguini = models.CharField(max_length=3, blank=True, null=True)
+    antecedents = models.TextField(blank=True, null=True)
+    malalties_croniques = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'historialclinic'
