@@ -130,16 +130,23 @@ class Tractament(models.Model):
         return self.codi_tractament
 
 class Prescripcio(models.Model):
-    codi_prescripcio = models.CharField(max_length = 15, primary_key = True)
-    tractament = models.ForeignKey(Tractament, on_delete = models.CASCADE)
-    medicament = models.ForeignKey(Medicament, on_delete = models.CASCADE)
+    ESTAT = [
+        ('activa', 'activa'),
+        ('finalitzada', 'finalitzada'),
+    ]
 
+    codi_prescripcio = models.CharField(max_length = 15, primary_key = True)
+    codi_tractament = models.CharField(max_length = 15)
+    codi_nacional = models.CharField(max_length = 15)
     dosi = models.CharField(max_length = 60)
     frequencia = models.CharField(max_length = 60)
     durada = models.CharField(max_length = 60)
-    estat = models.CharField(max_length = 20)
+    estat = models.CharField(max_length = 50, choices = ESTAT, default = 'activa')
 
     class Meta:
         managed = False
         db_table = 'prescripcio'
+    
+    def __str__(self):
+        return f"Prescripció {self.codi_prescripcio} - Tractament {self.codi_tractament}"
 
