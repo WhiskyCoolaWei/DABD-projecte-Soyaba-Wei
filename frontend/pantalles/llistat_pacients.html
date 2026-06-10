@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Directori de Pacients - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-avatar avatar-teal">DR</div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="sidebar-section-label">Gestió Clínica</div>
+      <a href="/agenda/" class="sidebar-item"><i class="fa-regular fa-calendar"></i> Agenda d'avui</a>
+      <a href="/pacients-llistat/" class="sidebar-item active"><i class="fa-solid fa-users"></i> Directori Pacients</a>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Directori Global de Pacients</h1>
+          <p class="page-subtitle">Gestió, cerca i accés a historials clínics actius.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="filter-bar">
+          <div class="filter-input-wrap" style="flex: 2;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-dni" placeholder="Filtrar per DNI...">
+          </div>
+          <div class="filter-input-wrap" style="flex: 2;">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="search-cognoms" placeholder="Filtrar per cognoms...">
+          </div>
+          <div class="filter-input-wrap" style="flex: 1;">
+            <select id="sort-cites" class="form-control" style="padding: 0.5rem; background: var(--slate-700); color: white; border: 1px solid var(--border);">
+              <option value="">Ordena per Cites Actives</option>
+              <option value="citas_activas">Menys cites actives primero</option>
+              <option value="-citas_activas">Més cites actives primer</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="carregarPacients(1)"><i class="fa-solid fa-filter"></i> Aplicar</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Pacient (DNI)</th>
+                <th>Telèfon</th>
+                <th>Correu Electrònic</th>
+                <th>Adreça</th>
+                <th>Cites Actives</th>
+                <th>Accions</th>
+              </tr>
+            </thead>
+            <tbody id="taula-pacients-body">
+              </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span id="info-paginacio">Carregant registres...</span>
+          <div class="pagination-pages" id="controls-paginacio">
+            </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let paginaActual = 1;
+
+    async function carregarPacients(pagina = 1) {
+      paginaActual = pagina;
+      const dni = document.getElementById('search-dni').value;
+      const cognoms = document.getElementById('search-cognoms').value;
+      const ordenar = document.getElementById('sort-cites').value;
+
+      let url = `/pacients/?pagina=${pagina}`;
+      if (dni) url += `&dni=${encodeURIComponent(dni)}`;
+      if (cognoms) url += `&cognoms=${encodeURIComponent(cognoms)}`;
+      if (ordenar) url += `&ordenar_per=${encodeURIComponent(ordenar)}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'èxit') {
+          const tbody = document.getElementById('taula-pacients-body');
+          tbody.innerHTML = '';
+
+          data.pacients.forEach(p => {
+            tbody.innerHTML += `
+              <tr>
+                <td>
+                  <div class="flex items-center gap-1">
+                    <div class="avatar avatar-sm avatar-blue">${p.nom[0]}${p.cognoms[0]}</div>
+                    <div>
+                      <span class="td-primary">${p.nom} ${p.cognoms}</span><br>
+                      <span class="text-xs text-dim font-mono">${p.dni}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="font-mono text-sm">${p.telefon}</td>
+                <td class="text-muted">${p.correu}</td>
+                <td class="text-sm text-dim">${p.adreca}</td>
+                <td>
+                  <span class="badge ${p.citas_activas > 0 ? 'badge-amber' : 'badge-slate'}">
+                    ${p.citas_activas} actives
+                  </span>
+                </td>
+                <td>
+                  <a href="/historial-metge/?dni=${p.dni}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-folder-open text-accent"></i> Historial
+                  </a>
+                </td>
+              </tr>
+            `;
+          });
+
+          // Actualizar Metadatos de Paginación
+          document.getElementById('info-paginacio').innerText = `Pàgina ${data.paginacio.pagina_actual} de ${data.paginacio.total_pagines}`;
+          
+          const controls = document.getElementById('controls-paginacio');
+          controls.innerHTML = `
+            <button class="page-btn" ${!data.paginacio.te_anterior ? 'disabled' : ''} onclick="carregarPacients(${paginaActual - 1})"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="page-btn active">${paginaActual}</button>
+            <button class="page-btn" ${!data.paginacio.te_seguent ? 'disabled' : ''} onclick="carregarPacients(${paginaActual + 1})"><i class="fa-solid fa-chevron-right"></i></button>
+          `;
+        }
+      } catch (error) {
+        console.error("Error carregant pacients:", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => carregarPacients(1));
+  </script>
+</body>
+</html>

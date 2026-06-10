@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda de Consultes - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-avatar avatar-teal">DR</div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="sidebar-section-label">Gestió Clínica</div>
+      <a href="/agenda/" class="sidebar-item active"><i class="fa-regular fa-calendar"></i> Agenda d'avui</a>
+      <a href="/llistat_pacients/" class="sidebar-item"><i class="fa-solid fa-users"></i> Directori Pacients</a>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Agenda Operativa Diària</h1>
+          <p class="page-subtitle" id="data-actual-label">Consultes programades per a la jornada d'avui.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Pacients Citats</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Codi Cita</th>
+                <th>Pacient (DNI)</th>
+                <th>Sala assignada</th>
+                <th>Estat</th>
+                <th>Acció</th>
+              </tr>
+            </thead>
+            <tbody id="agenda-cites-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    async function carregarAgenda() {
+      // Supongamos que el DNI del médico logueado está disponible o se maneja en sesión.
+      // Aquí consultamos las citas activas globales o por filtro
+      try {
+        const response = await fetch('/cites-llistat-diari/'); // Ruta mapeada que liste citas del día
+        const data = await response.json();
+
+        const tbody = document.getElementById('agenda-cites-body');
+        tbody.innerHTML = '';
+
+        if(data.cites && data.cites.length > 0) {
+          data.cites.forEach(c => {
+            tbody.innerHTML += `
+              <tr>
+                <td class="font-mono font-bold text-accent">${c.hora}</td>
+                <td class="font-mono text-sm">${c.codi_cita}</td>
+                <td class="td-primary">${c.dni_pacient}</td>
+                <td><span class="badge badge-slate">${c.codi_sala}</span></td>
+                <td>
+                  <span class="badge ${c.estat === 'pendent' ? 'badge-amber' : 'badge-green'}">${c.estat}</span>
+                </td>
+                <td>
+                  ${c.estat === 'pendent' ? 
+                    `<a href="/consulta-activa/?codi_cita=${c.codi_cita}&dni=${c.dni_pacient}" class="btn btn-primary btn-sm">Iniciar Visita</a>` : 
+                    `<button class="btn btn-ghost btn-sm" disabled>Finalitzada</button>`
+                  }
+                </td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-dim text-center">No hi ha visites agendades per avui.</td></tr>`;
+        }
+      } catch (error) {
+        console.error("Error cargando agenda:", error);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', carregarAgenda);
+  </script>
+</body>
+</html>

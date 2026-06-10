@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Historial Clínic - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+      <div class="topbar-actions">
+        <a href="/pacients-llistat/" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Tornar al Directori</a>
+      </div>
+    </header>
+
+    <main class="main-content" style="grid-column: 1 / -1;">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Historial Clínic: <span id="nom-pacient-titol" class="text-accent">Carregant...</span></h1>
+          <p class="page-subtitle">Codi d'Historial: <code id="codi-historial-label">...</code></p>
+        </div>
+      </div>
+
+      <div class="main-aside">
+        <div class="flex-col gap-2">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Línia Temporal d'Atenció i Evolució</h2>
+            </div>
+            <div class="card-body">
+              <div class="timeline" id="timeline-cites">
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-col gap-2">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title"><i class="fa-solid fa-id-card"></i> Dades Clíniques Base</h2>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="info-label">Grup Sanguini</span>
+                <span id="grup-sanguini" class="info-value font-bold text-danger">-</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Al·lèrgies</span>
+                <span id="allergies" class="info-value text-warning">Carregant...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Malalties Cròniques</span>
+                <span id="malalties-croniques" class="info-value">Carregant...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Antecedents</span>
+                <span id="antecedents" class="info-value text-xs text-muted">Carregant...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Recuperar el DNI de los parámetros URL del navegador
+    const params = new URLSearchParams(window.location.search);
+    const pacientDni = params.get('dni');
+
+    async function carregarHistorial() {
+      if (!pacientDni) return;
+      
+      try {
+        const response = await fetch(`/historial/?dni=${pacientDni}`);
+        const data = await response.json();
+
+        if (data.status === 'èxit') {
+          // 1. Renderizar datos demográficos/base
+          document.getElementById('nom-pacient-titol').innerText = data.historial.nom_pacient;
+          document.getElementById('codi-historial-label').innerText = data.historial.codi_historial;
+          document.getElementById('grup-sanguini').innerText = data.historial.grup_sanguini;
+          document.getElementById('allergies').innerText = data.historial.allergies;
+          document.getElementById('malalties-croniques').innerText = data.historial.malalties_croniques;
+          document.getElementById('antecedents').innerText = data.historial.antecedents;
+
+          // 2. Renderizar Timeline de Citas y sus contenidos anidados
+          const timeline = document.getElementById('timeline-cites');
+          timeline.innerHTML = '';
+
+          if (data.historial_clinic_complet.length === 0) {
+            timeline.innerHTML = `<p class="text-dim text-sm">Aquest pacient no té cap cita registrada a l'expedient.</p>`;
+            return;
+          }
+
+          data.historial_clinic_complet.forEach(cita => {
+            let htmlDiagnostics = '';
+            
+            cita.diagnostics.forEach(diag => {
+              let htmlTractaments = '';
+              diag.tractaments.forEach(trac => {
+                htmlTractaments += `
+                  <div class="mt-1" style="padding-left: 10px; border-left: 2px solid var(--blue-500);">
+                    <p class="text-xs text-secondary"><strong>Tractament (${trac.codi_tractament}):</strong> ${trac.indicacions} (Inici: ${trac.data_inici} - Fi: ${trac.data_fi_prevista})</p>
+                  </div>
+                `;
+              });
+
+              htmlDiagnostics += `
+                <div class="mt-2" style="background: var(--slate-800); padding: 8px; border-radius: var(--radius-sm);">
+                  <p class="text-sm font-semibold text-accent"><i class="fa-solid fa-stethoscope"></i> ${diag.descripcio} <span class="font-mono text-xs text-dim">(${diag.codi_diagnostic})</span></p>
+                  <p class="text-xs text-muted">Notes: ${diag.notes_cliniques || 'Sense anotacions complementàries'}</p>
+                  ${htmlTractaments}
+                </div>
+              `;
+            });
+
+            timeline.innerHTML += `
+              <div class="timeline-item">
+                <div class="timeline-dot ${cita.estat === 'finalitzada' ? 'success' : 'warning'}"></div>
+                <div class="timeline-time">${cita.data} - ${cita.hora}</div>
+                <div class="timeline-content">
+                  <div class="flex justify-between items-center">
+                    <h4 class="timeline-title">Visita Mèdica (${cita.codi_cita})</h4>
+                    <span class="badge ${cita.estat === 'finalitzada' ? 'badge-green' : 'badge-amber'}">${cita.estat}</span>
+                  </div>
+                  <p class="text-xs text-dim">Metge Responsable (DNI): ${cita.dni_metge}</p>
+                  ${htmlDiagnostics || '<p class="text-xs text-dim mt-1">Sense diagnòstics registrats en aquesta visita.</p>'}
+                </div>
+              </div>
+            `;
+          });
+        }
+      } catch (error) {
+        console.error("Error recuperando historial:", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarHistorial);
+  </script>
+</body>
+</html>

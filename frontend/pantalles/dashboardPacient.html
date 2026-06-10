@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>El meu Espai Salut - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-avatar" id="user-initials">--</div>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="sidebar-section-label">Àrea Pacient</div>
+      <a href="/espai-pacient/" class="sidebar-item active"><i class="fa-solid fa-house"></i> Inici</a>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Hola, <span id="nom-salutacio" class="text-accent">...</span></h1>
+          <p class="page-subtitle">Consulta de forma directa el teu expedient de salut en temps real.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon teal"><i class="fa-solid fa-droplet"></i></div>
+          <div class="stat-value" id="card-sanguini">--</div>
+          <div class="stat-label">Grup Sanguini</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon rose"><i class="fa-solid fa-hand-holding-medical"></i></div>
+          <div class="stat-value" id="card-alergies">0</div>
+          <div class="stat-label">Al·lèrgies Identificades</div>
+        </div>
+      </div>
+
+      <div class="card mt-2">
+        <div class="card-header"><h2 class="card-title">Resum del meu Historial Atendit</h2></div>
+        <div class="card-body flex-col gap-1">
+          <div class="info-row">
+            <span class="info-label">Al·lèrgies:</span>
+            <span class="info-value" id="text-alergies">Carregant...</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Malalties cròniques:</span>
+            <span class="info-value text-muted" id="text-croniques">Carregant...</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Asumimos el DNI del paciente autenticado por el backend
+    const miDni = "12345678Z"; 
+
+    async function carregarDadesPacient() {
+      try {
+        const response = await fetch(`/historial/?dni=${miDni}`);
+        const data = await response.json();
+        
+        if (data.status === 'èxit') {
+          document.getElementById('nom-salutacio').innerText = data.historial.nom_pacient;
+          document.getElementById('user-initials').innerText = data.historial.nom_pacient[0];
+          document.getElementById('card-sanguini').innerText = data.historial.grup_sanguini;
+          document.getElementById('text-alergies').innerText = data.historial.allergies;
+          document.getElementById('text-croniques').innerText = data.historial.malalties_croniques;
+          
+          // Contar número de alergias separadas por comas
+          const numAlergies = data.historial.allergies.toLowerCase().includes('cap') ? 0 : data.historial.allergies.split(',').length;
+          document.getElementById('card-alergies').innerText = numAlergies;
+        }
+      } catch (error) {
+        console.error("Error al cargar la información propia:", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarDadesPacient);
+  </script>
+</body>
+</html>

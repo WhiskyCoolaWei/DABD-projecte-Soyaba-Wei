@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta Mèdica Activa - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="badge badge-rose font-bold">CONSULTA EN CURS</span>
+      </div>
+    </header>
+
+    <main class="main-content" style="grid-column: 1 / -1;">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Acte Clínic Cita: <span id="label-codi-cita" class="text-accent font-mono">...</span></h1>
+          <p class="page-subtitle">Introducció de diagnòstics i generació farmacèutica simultània.</p>
+        </div>
+      </div>
+
+      <div class="main-aside-sm">
+        <div class="flex-col gap-2">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title"><i class="fa-solid fa-file-signature"></i> Registre de Diagnòstic Efectuat</h2>
+            </div>
+            <div class="card-body flex-col gap-2">
+              <div class="form-group">
+                <label class="form-label required">Codi del Diagnòstic (Intern / CIE)</label>
+                <input type="text" id="diag-codi" class="form-control font-mono" placeholder="Ex: DIA98475">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Descripció del Quadre Clínic</label>
+                <input type="text" id="diag-descricpio" class="form-control" placeholder="Ex: Hipertensió arterial essencial">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notes Clíniques Complementàries</label>
+                <textarea id="diag-notes" class="form-control" placeholder="Observacions del pacient, símptomes descrits..."></textarea>
+              </div>
+              
+              <div class="mt-2 flex" style="justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="guardarDiagnostic()"><i class="fa-solid fa-floppy-disk"></i> Desat i Següent (Prescripció)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-col gap-2">
+          <div class="card">
+            <div class="card-header"><h2 class="card-title">Fitxa del Pacient</h2></div>
+            <div class="card-body flex-col items-center">
+              <div class="avatar avatar-lg avatar-teal mb-1" id="avatar-inicials">--</div>
+              <h3 class="text-base font-semibold" id="pacient-nom">Carregant...</h3>
+              <p class="text-xs text-dim font-mono mb-2" id="pacient-dni">...</p>
+              
+              <div class="w-full">
+                <hr class="divider">
+                <div class="info-row" style="grid-template-columns: 100px 1fr;">
+                  <span class="info-label">Sanguini</span>
+                  <span class="info-value font-bold text-success" id="pacient-sang">-</span>
+                </div>
+                <div class="info-row" style="grid-template-columns: 100px 1fr;">
+                  <span class="info-label">Al·lèrgies</span>
+                  <span class="info-value text-sm text-warning" id="pacient-alergies">...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const codiCita = params.get('codi_cita');
+    const dniPacient = params.get('dni');
+
+    document.getElementById('label-codi-cita').innerText = codiCita;
+
+    async function carregarResumPacient() {
+      try {
+        const response = await fetch(`/historial/?dni=${dniPacient}`);
+        const data = await response.json();
+        if(data.status === 'èxit') {
+          document.getElementById('pacient-nom').innerText = data.historial.nom_pacient;
+          document.getElementById('pacient-dni').innerText = data.historial.dni_pacient;
+          document.getElementById('pacient-sang').innerText = data.historial.grup_sanguini;
+          document.getElementById('pacient-alergies').innerText = data.historial.allergies;
+          document.getElementById('avatar-inicials').innerText = data.historial.nom_pacient[0];
+        }
+      } catch (error) {
+        console.error("Error carregant dades del pacient:", error);
+      }
+    }
+
+    async function guardarDiagnostic() {
+      const codi_diagnostic = document.getElementById('diag-codi').value;
+      const descripcio = document.getElementById('diag-descricpio').value;
+      const notes_cliniques = document.getElementById('diag-notes').value;
+
+      try {
+        const response = await fetch('/diagnostics/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ codi_diagnostic, descripcio, notes_cliniques, codi_cita: codiCita })
+        });
+        const data = await response.json();
+        
+        if(data.status === 'èxit') {
+          alert('Diagnòstic guardat correctament.');
+          // Redirigir a la pantalla de prescripción pasando el código de diagnóstico recién creado
+          window.location.href = `/prescripcio-crear/?codi_diagnostic=${codi_diagnostic}&dni=${dniPacient}`;
+        } else {
+          alert('Error: ' + data.missatge);
+        }
+      } catch (error) {
+        console.error("Error enviant diagnòstic:", error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarResumPacient);
+  </script>
+</body>
+</html>

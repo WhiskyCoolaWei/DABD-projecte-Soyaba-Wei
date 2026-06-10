@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Nova Prescripció - HealthLog</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div class="brand-name">Health<span>Log</span></div>
+      </div>
+    </header>
+
+    <main class="main-content" style="grid-column: 1 / -1;">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Emetre Recepta / Prescripció Mèdica</h1>
+          <p class="page-subtitle">Associa medicaments al tractament del diagnòstic efectuat.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h2 class="card-title"><i class="fa-solid fa-magnifying-glass-plus"></i> Cercador de Medicaments Oficials</h2></div>
+          <div class="card-body flex-col gap-1">
+            <div class="form-group">
+              <label class="form-label">Nom Comercial o Principi Actiu</label>
+              <input type="text" id="input-cerca-med" class="form-control" placeholder="Ex: Paracetamol o Gelocatil">
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="cercarMedicaments()"><i class="fa-solid fa-search"></i> Consultar Base de Dades</button>
+            
+            <div class="table-wrapper mt-2">
+              <table>
+                <thead><tr><th>Codi Nacional</th><th>Medicament</th><th>Selecció</th></tr></thead>
+                <tbody id="vademecum-resultats">
+                  <tr><td colspan="3" class="text-dim text-center">Fes una cerca per triar un producte.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title"><i class="fa-solid fa-capsules"></i> Dades de la Prescripció</h2></div>
+          <div class="card-body flex-col gap-2">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Codi Prescripció (Format: PREXXXXXXXX)</label>
+                <input type="text" id="pres-codi" class="form-control font-mono" placeholder="PRE12345678">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Codi Tractament (Format: TRXXXXXXXX)</label>
+                <input type="text" id="pres-tractament" class="form-control font-mono" placeholder="TR12345678">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Codi Nacional Seleccionat</label>
+              <input type="text" id="pres-cn" class="form-control font-mono" readonly style="background: var(--navy-900); border-color: var(--teal-600);">
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Dosi</label>
+                <input type="text" id="pres-dosi" class="form-control" placeholder="Ex: 1 comprimit">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Freqüència</label>
+                <input type="text" id="pres-frequencia" class="form-control" placeholder="Ex: Cada 8 hores">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Durada del Tractament</label>
+              <input type="text" id="pres-durada" class="form-control" placeholder="Ex: 7 dies">
+            </div>
+
+            <button class="btn btn-primary w-full mt-1" onclick="emetrePrescripcio()"><i class="fa-solid fa-paper-plane"></i> Emetre i Finalitzar Tractament</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    async function cercarMedicaments() {
+      const query = document.getElementById('input-cerca-med').value;
+      try {
+        const response = await fetch(`/medicaments/?nom_comercial=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        const tbody = document.getElementById('vademecum-resultats');
+        tbody.innerHTML = '';
+
+        if(data.medicaments && data.medicaments.length > 0) {
+          data.medicaments.forEach(m => {
+            tbody.innerHTML += `
+              <tr>
+                <td class="font-mono text-accent">${m.codi_nacional}</td>
+                <td><strong>${m.nom_comercial}</strong><br><span class="text-xs text-dim">${m.principi_actiu}</span></td>
+                <td><button class="btn btn-secondary btn-sm" onclick="seleccionarCN('${m.codi_nacional}')">Tria</button></td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="3" class="text-dim text-center">Cap medicament trobat.</td></tr>`;
+        }
+      } catch (error) { console.error("Error buscando medicamentos:", error); }
+    }
+
+    function seleccionarCN(cn) {
+      document.getElementById('pres-cn').value = cn;
+    }
+
+    async function emetrePrescripcio() {
+      const payload = {
+        codi_prescripcio: document.getElementById('pres-codi').value,
+        codi_tractament: document.getElementById('pres-tractament').value,
+        codi_nacional: document.getElementById('pres-cn').value,
+        dosi: document.getElementById('pres-dosi').value,
+        frequencia: document.getElementById('pres-frequencia').value,
+        durada: document.getElementById('pres-durada').value,
+        estat: 'activa'
+      };
+
+      try {
+        const response = await fetch('/prescripcions/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if(data.status === 'èxit') {
+          alert('Prescripció emesa correctament a la Farmàcia.');
+          window.location.href = '/agenda/';
+        } else {
+          alert('Error de negoci: ' + data.missatge);
+        }
+      } catch (error) { console.error("Error emitiendo prescripción:", error); }
+    }
+  </script>
+</body>
+</html>
