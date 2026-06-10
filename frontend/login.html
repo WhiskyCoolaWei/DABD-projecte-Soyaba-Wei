@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthLog – Login</title>
+</head>
+<body>
+  <h1>HealthLog – Iniciar sessió</h1>
+  <form id="loginForm">
+    <label>Email:<br><input type="email" id="email" required></label><br><br>
+    <label>Contrasenya:<br><input type="password" id="contrasenya" required></label><br><br>
+    <button type="submit">Entrar</button>
+  </form>
+  <p id="missatge"></p>
+  <hr>
+  <p><a href="registreUsuari.html">No tens compte? Registra't</a></p>
+
+  <script>
+    const API = 'http://localhost:8000';
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(`${API}/login/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          email:       document.getElementById('email').value,
+          contrasenya: document.getElementById('contrasenya').value
+        })
+      });
+      const data = await res.json();
+      const msg  = document.getElementById('missatge');
+      if (data.status === 'èxit') {
+        msg.style.color = 'green';
+        msg.textContent = `Benvingut/da ${data.nom} — Rols: ${data.rols.join(', ')}`;
+      } else {
+        msg.style.color = 'red';
+        msg.textContent = data.missatge;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthLog – Registre</title>
+</head>
+<body>
+  <h1>HealthLog – Registre d'usuari</h1>
+  <form id="registreForm">
+    <label>DNI (persona existent):<br><input type="text" id="dni" required></label><br><br>
+    <label>Email:<br><input type="email" id="email" required></label><br><br>
+    <label>Contrasenya:<br><input type="password" id="contrasenya" required></label><br><br>
+    <button type="submit">Registrar</button>
+  </form>
+  <p id="missatge"></p>
+  <hr>
+  <p><a href="login.html">Ja tens compte? Inicia sessió</a></p>
+
+  <script>
+    const API = 'http://localhost:8000';
+    document.getElementById('registreForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(`${API}/usuaris/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          dni:         document.getElementById('dni').value,
+          email:       document.getElementById('email').value,
+          contrasenya: document.getElementById('contrasenya').value
+        })
+      });
+      const data = await res.json();
+      const msg  = document.getElementById('missatge');
+      if (data.status === 'èxit') {
+        msg.style.color = 'green';
+        msg.textContent = data.missatge;
+      } else {
+        msg.style.color = 'red';
+        msg.textContent = data.missatge;
+      }
+    });
+  </script>
+</body>
+</html>
