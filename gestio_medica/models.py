@@ -216,15 +216,53 @@ class Supervisio(models.Model):
     dni_supervisor = models.ForeignKey(
                         Metge,
                         on_delete=models.CASCADE,
-                        db_column='dni_supervisor',
-                        related_name='supervisats')
+                        db_column='supervisor_dni',
+                        related_name='supervisats',
+                        primary_key=True)
     dni_supervisat = models.ForeignKey(
                         Metge,
                         on_delete=models.CASCADE,
-                        db_column='dni_supervisat',
+                        db_column='supervisat_dni',
                         related_name='supervisors')
 
     class Meta:
         managed      = False
         db_table     = 'supervisio'
         unique_together = [('dni_supervisor', 'dni_supervisat')]
+
+
+class CentreMedic(models.Model):
+    codi_centre = models.CharField(max_length=15, primary_key=True)
+    nom         = models.CharField(max_length=150)
+    carrer      = models.CharField(max_length=200, blank=True, null=True)
+    codi_postal = models.CharField(max_length=10,  blank=True, null=True)
+    ciutat      = models.CharField(max_length=100, blank=True, null=True)
+    telefon     = models.CharField(max_length=20,  blank=True, null=True)
+
+    class Meta:
+        managed  = False
+        db_table = 'centremedic'
+
+    def __str__(self):
+        return self.nom
+
+
+class Torn(models.Model):
+    codi_torn   = models.CharField(max_length=15, primary_key=True)
+    dia_setmana = models.CharField(max_length=20)
+    hora_inici  = models.TimeField()
+    hora_fi     = models.TimeField()
+    data_inici  = models.DateField()
+    data_fi     = models.DateField()
+    dni_metge   = models.ForeignKey(
+                    'Metge', on_delete=models.CASCADE, db_column='dni_metge')
+    codi_centre = models.ForeignKey(
+                    'CentreMedic', on_delete=models.CASCADE, db_column='codi_centre')
+
+    class Meta:
+        managed  = False
+        db_table = 'torn'
+
+    def __str__(self):
+        dies = {1:'Dl',2:'Dm',3:'Dc',4:'Dj',5:'Dv',6:'Ds',7:'Dg'}
+        return f"{dies.get(self.dia_setmana,'?')} {self.hora_inici}-{self.hora_fi}"

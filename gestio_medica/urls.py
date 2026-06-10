@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from gestio_medica.views.viewsMetge import crearMetgeController
 from gestio_medica.views.viewsTractament import crearTractamentController, consultarTractamentController
 from gestio_medica.views.viewsDiagnostic import crearDiagnosticController
@@ -9,10 +9,13 @@ from gestio_medica.views.viewsHistorialClinic import historialClinicController
 from gestio_medica.views.viewsMedicament import medicamentController
 from gestio_medica.views.viewsUsuari import usuariController, loginController
 from gestio_medica.views.viewsMalaltia import malaltiaController, associarMalaltiaController
+from gestio_medica.views.viewsSupervisio import supervisioController
+from gestio_medica.views.viewsCentreMedic import centreMedicController
+from gestio_medica.views.viewsTorn import tornController
 
 urlpatterns = [
     #======================================================================
-    #ENDPOINTS PARA CASOS DE USO
+    # ENDPOINTS PARA CASOS DE USO — Part Wei
     path('metges/', crearMetgeController, name='CrearMetge'),
     path('tractaments/', crearTractamentController, name='crearTractament'),
     path('tractaments/consultar/', consultarTractamentController, name='ConsultarTractament'),
@@ -27,5 +30,8 @@ urlpatterns = [
     path('login/', loginController, name='Login'),
     path('malalties/', malaltiaController, name='Malalties'),
     path('diagnostics/<str:codi_diagnostic>/malalties/', associarMalaltiaController, name='AssociarMalaltia'),
+    path('supervisio/', supervisioController, name='Supervisio'),
+    path('centres/', centreMedicController, name='Centres'),
+    path('torns/', tornController, name='Torns'),
     #======================================================================
 ]

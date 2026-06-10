@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Clinic Complet - HealthLog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; border-radius: 10px; }
+        .timeline-item { border-left: 3px solid #0d6efd; padding-left: 20px; position: relative; margin-bottom: 1.5rem; }
+        .timeline-item::before { content:''; position:absolute; width:12px; height:12px; background-color:#0d6efd; border-radius:50%; left:-8px; top:5px; }
+        .timeline-item.finalitzada { border-left-color: #6c757d; }
+        .timeline-item.finalitzada::before { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <span class="navbar-brand">📋 Historial Clinic Complet</span>
+        <button class="btn btn-outline-light btn-sm fw-bold"
+                onclick="window.location.href='dashboardPacient.html'">
+            Tornar al Portal
+        </button>
+    </div>
+</nav>
+<div class="container mb-5">
+    <div class="card p-4 shadow-sm bg-white mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="text-primary mb-1" id="lblNom">Carregant...</h3>
+                <p class="text-muted mb-0">DNI: <strong id="lblDni">—</strong></p>
+            </div>
+            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                <span class="badge bg-danger p-2 fs-6">Grup Sanguini: <span id="lblGrup">—</span></span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card p-4 shadow-sm bg-white border-top border-warning border-4 mb-4">
+                <h5 class="text-warning mb-3">Allergies i Alertes</h5>
+                <p id="lblAllergies" class="text-dark bg-light p-3 rounded fw-semibold mb-0">—</p>
+            </div>
+            <div class="card p-4 shadow-sm bg-white border-top border-info border-4">
+                <h5 class="text-info mb-3">Condicions Croniques</h5>
+                <label class="fw-bold small text-muted">Malalties Croniques:</label>
+                <p id="lblMalalties" class="text-secondary bg-light p-2 rounded small mb-3">—</p>
+                <label class="fw-bold small text-muted">Antecedents:</label>
+                <p id="lblAntecedents" class="text-secondary bg-light p-2 rounded small mb-0">—</p>
+            </div>
+        </div>
+        <div class="col-md-8 mb-4">
+            <div class="card p-4 shadow-sm bg-white">
+                <h4 class="text-primary border-bottom pb-2 mb-4">Evolucio de Diagnostics i Tractaments</h4>
+                <div id="timeline"><p class="text-center text-muted py-4">Carregant historial...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const API = 'http://localhost:8000';
+    const dniPacient = localStorage.getItem('pacient_dni');
+    const nomPacient = localStorage.getItem('pacient_nom');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!dniPacient) { window.location.href = 'login.html'; return; }
+        document.getElementById('lblNom').textContent = nomPacient || '—';
+        document.getElementById('lblDni').textContent = dniPacient;
+        carregarHistorial();
+    });
+
+    async function carregarHistorial() {
+        try {
+            const res  = await fetch(API + '/historial/?dni=' + dniPacient);
+            const data = await res.json();
+            if (data.status !== 'èxit') {
+                document.getElementById('timeline').innerHTML =
+                    '<div class="alert alert-warning">' + data.missatge + '</div>';
+                return;
+            }
+            const h = data.historial;
+            document.getElementById('lblGrup').textContent       = h.grup_sanguini;
+            document.getElementById('lblAllergies').textContent   = h.allergies;
+            document.getElementById('lblMalalties').textContent   = h.malalties_croniques;
+            document.getElementById('lblAntecedents').textContent = h.antecedents;
+            renderTimeline(data.historial_clinic_complet || []);
+        } catch (e) {
+            document.getElementById('timeline').innerHTML =
+                '<div class="alert alert-danger">Error de connexio amb el servidor.</div>';
+        }
+    }
+
+    function renderTimeline(cites) {
+        const container = document.getElementById('timeline');
+        if (!cites.length) {
+            container.innerHTML = '<p class="text-muted text-center py-3">No hi ha visites registrades.</p>';
+            return;
+        }
+        cites.sort((a, b) => {
+            const da = a.data.split('/').reverse().join('-');
+            const db = b.data.split('/').reverse().join('-');
+            return db.localeCompare(da);
+        });
+        const badgeCls = { pendent:'bg-warning text-dark', confirmada:'bg-success text-white',
+                           finalitzada:'bg-secondary text-white', cancelada:'bg-danger text-white' };
+        container.innerHTML = cites.map(cita => {
+            let diagnBlock = '';
+            if (cita.diagnostics && cita.diagnostics.length > 0) {
+                cita.diagnostics.forEach(d => {
+                    let tractBlock = '';
+                    if (d.tractaments && d.tractaments.length > 0) {
+                        tractBlock = d.tractaments.map(t =>
+                            '<div class="mt-1 ps-3 border-start border-2 border-success">' +
+                            '<small>Tractament: <strong>' + (t.indicacions || 'Sense indicacions') + '</strong>' +
+                            ' (' + t.data_inici + ' - ' + t.data_fi_prevista + ')</small></div>'
+                        ).join('');
+                    }
+                    diagnBlock += '<div class="mb-2"><strong>' + d.descripcio + '</strong>' +
+                        (d.notes_cliniques ? '<br><small class="text-muted">' + d.notes_cliniques + '</small>' : '') +
+                        tractBlock + '</div>';
+                });
+            } else {
+                diagnBlock = '<small class="text-muted">Sense diagnostic registrat.</small>';
+            }
+            const cls = badgeCls[cita.estat] || 'bg-secondary text-white';
+            return '<div class="timeline-item ' + cita.estat + '">' +
+                '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                '<h6 class="fw-bold mb-0">' + cita.codi_cita + '</h6>' +
+                '<div class="d-flex gap-2 align-items-center">' +
+                '<small class="text-muted">' + cita.data + ' ' + cita.hora + '</small>' +
+                '<span class="badge ' + cls + '">' + cita.estat + '</span></div></div>' +
+                '<small class="text-muted d-block mb-2">Metge: <strong>' + cita.dni_metge + '</strong></small>' +
+                '<div class="bg-light p-3 rounded small">' + diagnBlock + '</div></div>';
+        }).join('');
+    }
+</script>
+</body>
+</html>

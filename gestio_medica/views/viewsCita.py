@@ -5,11 +5,42 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from gestio_medica.use_cases.cita.crearCita import crearCita
 from gestio_medica.use_cases.cita.consultarCita import consultarCita
+from gestio_medica.use_cases.cita.citesDisponibles import slotsDisponibles
+from gestio_medica.use_cases.cita.citesDelMetge import citesDelMetge
 
 @csrf_exempt
 def crearCitaController(request):
 
     if request.method == 'GET':
+        # Slots disponibles per metge+data+centre
+        dni_metge   = request.GET.get('dni_metge')
+        data_str    = request.GET.get('data')
+        codi_centre = request.GET.get('codi_centre')
+        if dni_metge and data_str and codi_centre:
+            try:
+                slots = slotsDisponibles(dni_metge, data_str, codi_centre)
+                return JsonResponse({"status": "exit", "slots": slots}, status=200)
+            except Exception as e:
+                return JsonResponse(
+                    {"status": "error_intern", "missatge": str(e)}, status=500)
+
+        if dni_metge and not data_str and not codi_centre:
+            try:
+                cites = citesDelMetge(dni_metge)
+                llista = [{
+                    "codi_cita"  : c.codi_cita,
+                    "data"       : str(c.data),
+                    "hora"       : str(c.hora)[:5],
+                    "estat"      : c.estat,
+                    "dni_pacient": c.dni_pacient,
+                    "codi_centre": c.codi_centre
+                } for c in cites]
+                return JsonResponse(
+                    {"status": "exit", "cites": llista}, status=200)
+            except Exception as e:
+                return JsonResponse(
+                    {"status": "error_intern", "missatge": str(e)}, status=500)
+
         codi_cita = request.GET.get('codi_cita')
         
         if not codi_cita:
@@ -41,7 +72,7 @@ def crearCitaController(request):
     
     try:
         dades = json.loads(request.body)
-        codi_cita = f"CT{timestamp}{random.randint(10, 99)}"
+        codi_cita = f"CT{random.randint(10000000, 99999999)}"
         
         data_str = dades.get('data')
         hora_str = dades.get('hora')
