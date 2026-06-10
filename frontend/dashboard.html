@@ -112,6 +112,7 @@
     </button>
   </div>
   <br>
+  <button class="btn btn-verd" onclick="window.location.href='llistatPacients.html'" style="margin-right:10px">Els meus pacients</button>
   <button class="btn btn-vermell" onclick="logout()">Tancar sessio</button>
 
   <script>
@@ -287,7 +288,7 @@
           body: JSON.stringify({
             dni_pacient: pacient, dni_metge: usuari.dni,
             data: data, hora: hora,
-            codi_centre: centre, codi_sala: 'SALA-GEN'
+            codi_centre: centre, codi_sala: (TORNS_METGE.find(function(t){return t.codi_centre===centre;})||{}).codi_sala||''
           })
         });
         var d = await r.json();

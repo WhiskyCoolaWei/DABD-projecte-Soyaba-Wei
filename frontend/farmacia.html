@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>HealthLog - Farmacia</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f4f7f6;padding:30px}
+        .container{max-width:750px;margin:0 auto}
+        .card{background:white;padding:25px 30px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:20px}
+        h1{color:#1a5276}
+        h2{color:#1a5276;margin-top:0;border-bottom:2px solid #d5e8f3;padding-bottom:8px}
+        label{display:block;margin:10px 0 5px;font-weight:bold;color:#555}
+        input{width:100%;padding:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px}
+        button{padding:10px 20px;background:#1a5276;color:white;border:none;border-radius:4px;cursor:pointer;margin-top:10px}
+        button:hover{background:#154360}
+        .btn-verd{background:#28a745}
+        .btn-verd:hover{background:#218838}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th{background:#1a5276;color:white;padding:8px;text-align:left}
+        td{padding:7px 8px;border-bottom:1px solid #eee}
+        tr:hover td{background:#f0f5fb}
+        .back a{color:#1a5276;text-decoration:none;font-size:14px}
+        .ok{color:green}
+        .err{color:red}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="back"><a href="dashboard.html">Tornar al dashboard</a></div>
+    <h1>Farmacia del Centre</h1>
+
+    <div class="card">
+        <h2>Estoc de Medicaments</h2>
+        <label>Codi Centre:</label>
+        <input type="text" id="codi_centre" placeholder="Ex: C0006">
+        <button onclick="carregarEstoc()">Consultar estoc</button>
+        <div id="taula-estoc" style="margin-top:15px"></div>
+    </div>
+
+    <div class="card">
+        <h2>Dispensar Medicament</h2>
+        <label>Codi Centre (farmacia):</label>
+        <input type="text" id="d-centre" placeholder="Ex: C0006">
+        <label>Codi Tractament:</label>
+        <input type="text" id="d-tractament" placeholder="Ex: TR00000001">
+        <label>Codi Nacional Medicament:</label>
+        <input type="text" id="d-nacional" placeholder="Ex: CN261859">
+        <label>Quantitat:</label>
+        <input type="number" id="d-quantitat" value="1" min="1">
+        <button class="btn-verd" onclick="dispensar()">Dispensar</button>
+        <p id="msg-disp" style="margin-top:10px;font-weight:bold"></p>
+    </div>
+</div>
+<script>
+var API = 'http://127.0.0.1:8000';
+
+async function carregarEstoc() {
+    var centre = document.getElementById('codi_centre').value.trim().toUpperCase();
+    if (!centre) { alert('Introdueix el codi del centre.'); return; }
+    try {
+        var r    = await fetch(API + '/farmacies/?codi_centre=' + centre);
+        var data = await r.json();
+        var div  = document.getElementById('taula-estoc');
+        if (data.estoc && data.estoc.length > 0) {
+            var html = '<table><tr><th>Codi</th><th>Nom Comercial</th><th>Principi Actiu</th><th>Estoc</th></tr>';
+            data.estoc.slice(0, 50).forEach(function(e) {
+                html += '<tr><td>' + e.codi_nacional + '</td><td>' + e.nom_comercial
+                      + '</td><td>' + e.principi_actiu + '</td><td><strong>'
+                      + e.quantitat_disponible + '</strong></td></tr>';
+            });
+            html += '</table>';
+            if (data.estoc.length > 50) html += '<p style="color:#888">Mostrant 50 de ' + data.estoc.length + ' medicaments.</p>';
+            div.innerHTML = html;
+        } else {
+            div.innerHTML = '<p style="color:#999">Cap medicament a l\'estoc.</p>';
+        }
+    } catch(e) { alert('Error: No s\'ha pogut connectar amb el servidor.'); }
+}
+
+async function dispensar() {
+    var msg = document.getElementById('msg-disp');
+    msg.textContent = '';
+    var dades = {
+        codi_centre    : document.getElementById('d-centre').value.trim().toUpperCase(),
+        codi_tractament: document.getElementById('d-tractament').value.trim(),
+        codi_nacional  : document.getElementById('d-nacional').value.trim(),
+        quantitat      : document.getElementById('d-quantitat').value
+    };
+    try {
+        var r       = await fetch(API + '/dispensacions/', {
+            method : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body   : JSON.stringify(dades)
+        });
+        var resultat = await r.json();
+        if (r.status === 201) {
+            alert('Exit: ' + resultat.missatge + ' Codi: ' + resultat.codi_dispensacio);
+            msg.className = 'ok';
+            msg.textContent = 'Dispensacio ' + resultat.codi_dispensacio + ' - ' + resultat.data_lliurament;
+            carregarEstoc();
+        } else {
+            alert('Error: ' + resultat.missatge);
+        }
+    } catch(e) { alert('Error: No s\'ha pogut connectar amb el servidor.'); }
+}
+</script>
+</body>
+</html>

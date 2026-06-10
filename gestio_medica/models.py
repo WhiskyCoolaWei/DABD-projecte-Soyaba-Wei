@@ -266,3 +266,68 @@ class Torn(models.Model):
     def __str__(self):
         dies = {1:'Dl',2:'Dm',3:'Dc',4:'Dj',5:'Dv',6:'Ds',7:'Dg'}
         return f"{dies.get(self.dia_setmana,'?')} {self.hora_inici}-{self.hora_fi}"
+
+
+class Farmacia(models.Model):
+    # 1:1 amb CentreMedic — la PK és el mateix codi_centre
+    codi_centre = models.OneToOneField(
+        CentreMedic,
+        on_delete=models.CASCADE,
+        db_column='codi_centre',
+        primary_key=True,
+        related_name='farmacia'
+    )
+
+    class Meta:
+        managed  = False
+        db_table = 'farmacia'
+
+    def __str__(self):
+        return f"Farmàcia {self.codi_centre_id}"
+
+
+class EstocMedicament(models.Model):
+    # Classe associativa Farmàcia ↔ Medicament
+    codi_centre = models.ForeignKey(
+        Farmacia,
+        on_delete=models.CASCADE,
+        db_column='codi_centre',
+        related_name='estoc',
+        primary_key=True
+    )
+    codi_nacional = models.ForeignKey(
+        Medicament,
+        on_delete=models.RESTRICT,
+        db_column='codi_nacional',
+        related_name='estoc'
+    )
+    quantitat_disponible = models.IntegerField(default=0)
+
+    class Meta:
+        managed         = False
+        db_table        = 'estocmedicament'
+        unique_together = [('codi_centre', 'codi_nacional')]
+
+
+class Dispensacio(models.Model):
+    # Lliurament d'un medicament a un pacient per una prescripció activa
+    codi_dispensacio     = models.CharField(max_length=15, primary_key=True)
+    data_lliurament      = models.DateField()
+    quantitat_dispensada = models.IntegerField()
+    # FK a Farmacia
+    codi_centre          = models.ForeignKey(
+        Farmacia,
+        on_delete=models.RESTRICT,
+        db_column='codi_centre',
+        related_name='dispensacions'
+    )
+    # FK composta a Prescripcio (PK natural) — usem CharField com fa Wei
+    codi_tractament = models.CharField(max_length=15)
+    codi_nacional   = models.CharField(max_length=15)
+
+    class Meta:
+        managed  = False
+        db_table = 'dispensacio'
+
+    def __str__(self):
+        return self.codi_dispensacio
