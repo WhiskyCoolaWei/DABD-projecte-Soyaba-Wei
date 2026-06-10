@@ -211,3 +211,20 @@ class DiagnosticMalaltia(models.Model):
         managed      = False
         db_table     = 'diagnosticmalaltia'
         unique_together = [('diagnostic', 'malaltia')]
+
+class Supervisio(models.Model):
+    dni_supervisor = models.ForeignKey(
+                        Metge,
+                        on_delete=models.CASCADE,
+                        db_column='dni_supervisor',
+                        related_name='supervisats')
+    dni_supervisat = models.ForeignKey(
+                        Metge,
+                        on_delete=models.CASCADE,
+                        db_column='dni_supervisat',
+                        related_name='supervisors')
+
+    class Meta:
+        managed      = False
+        db_table     = 'supervisio'
+        unique_together = [('dni_supervisor', 'dni_supervisat')]
