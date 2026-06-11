@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>HealthLog - Els meus pacients</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 20px 25px; border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h1 { color: #1a5276; margin-bottom: 5px; }
+        .cerca-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .cerca-row input { flex: 1; padding: 9px; border: 1px solid #ccc;
+                           border-radius: 4px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1a5276; color: white; padding: 10px 12px;
+             text-align: left; font-size: 14px; }
+        td { padding: 9px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover td { background: #f0f5fb; cursor: pointer; }
+        .btn-gest { background: #28a745; color: white; border: none; padding: 5px 12px;
+                    border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-gest:hover { background: #218838; }
+        .back a { color: #1a5276; text-decoration: none; font-size: 14px; }
+        .badge { background: #d5e8f3; color: #1a5276; padding: 2px 8px;
+                 border-radius: 10px; font-size: 12px; }
+        .buit { color: #999; font-style: italic; padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="back"><a href="dashboard.html">Tornar al dashboard</a></div>
+    <h1>Els meus Pacients</h1>
+    <p style="color:#555;font-size:14px">Pacients amb cites finalitzades atesos per tu.</p>
+
+    <div class="card">
+        <div class="cerca-row">
+            <input type="text" id="filtre" placeholder="Cercar per nom o cognoms..."
+                   oninput="filtrar()">
+        </div>
+        <p id="comptador" style="color:#888;font-size:13px;margin:0 0 10px"></p>
+        <table id="taula">
+            <thead>
+                <tr>
+                    <th>Pacient</th>
+                    <th>DNI</th>
+                    <th>Telefon</th>
+                    <th>Ultima visita</th>
+                    <th>Accio</th>
+                </tr>
+            </thead>
+            <tbody id="cos-taula">
+                <tr><td colspan="5" class="buit">Carregant pacients...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+var API      = 'http://127.0.0.1:8000';
+var usuari   = JSON.parse(localStorage.getItem('usuari') || 'null');
+var tots     = [];
+
+if (!usuari) window.location.href = 'login.html';
+
+async function carregarPacients() {
+    try {
+        var r    = await fetch(API + '/metges/pacients/?dni_metge=' + usuari.dni);
+        var data = await r.json();
+        tots = data.pacients || [];
+        mostrar(tots);
+    } catch(e) {
+        document.getElementById('cos-taula').innerHTML =
+            '<tr><td colspan="5" class="buit">Error de connexio.</td></tr>';
+    }
+}
+
+function mostrar(llista) {
+    document.getElementById('comptador').textContent =
+        llista.length + ' pacient' + (llista.length !== 1 ? 's' : '');
+    if (llista.length === 0) {
+        document.getElementById('cos-taula').innerHTML =
+            '<tr><td colspan="5" class="buit">Cap pacient trobat.</td></tr>';
+        return;
+    }
+    document.getElementById('cos-taula').innerHTML = llista.map(function(p) {
+        return '<tr>'
+            + '<td><b>' + p.nom + ' ' + p.cognoms + '</b></td>'
+            + '<td>' + p.dni + '</td>'
+            + '<td>' + p.telefon + '</td>'
+            + '<td>' + (p.ultima_cita || '-') + '</td>'
+            + '<td><button class="btn-gest" onclick="gestionar(\''
+            + p.dni + '\')">Gestio clinica</button></td>'
+            + '</tr>';
+    }).join('');
+}
+
+function filtrar() {
+    var q = document.getElementById('filtre').value.toLowerCase();
+    if (!q) { mostrar(tots); return; }
+    mostrar(tots.filter(function(p) {
+        return (p.nom + ' ' + p.cognoms + ' ' + p.dni).toLowerCase().includes(q);
+    }));
+}
+
+function gestionar(dni) {
+    window.location.href = 'gestioClinica.html?dni=' + dni;
+}
+
+carregarPacients();
+</script>
+</body>
+</html>

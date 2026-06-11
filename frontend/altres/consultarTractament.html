@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Front-end Desacoblat - Consultar Tractament</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 450px; }
+        h2 { color: #333; margin-top: 0; text-align: center; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; color: #555; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        
+        /* Estilos para la caja de resultados */
+        .resultats { margin-top: 25px; padding: 15px; background-color: #e9ecef; border-radius: 4px; display: none; }
+        .resultats p { margin: 8px 0; color: #333; }
+        .resultats span { font-weight: bold; color: #000; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Consultar Tractament</h2>
+    
+    <form id="consultaForm">
+        <label>Introdueix el Codi del Tractament:</label>
+        <input type="text" id="codi_cerca" required pattern="TR\d{8}" maxlength="10" placeholder="Ex: TR00000001">
+
+        <button type="submit">Cercar a la BBDD</button>
+    </form>
+
+    <div id="caixaResultats" class="resultats">
+        <h3 style="margin-top:0; color:#28a745;">Dades del Tractament</h3>
+        <p>Codi: <span id="res_codi"></span></p>
+        <p>Data Inici: <span id="res_inici"></span></p>
+        <p>Data Fi Prevista: <span id="res_fi"></span></p>
+        <p>Codi Diagnòstic: <span id="res_diagnostic"></span></p>
+        <p>Indicacions: <span id="res_indicacions"></span></p>
+    </div>
+</div>
+
+<script>
+document.getElementById('consultaForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); 
+
+    const codi = document.getElementById('codi_cerca').value;
+    const caixaResultats = document.getElementById('caixaResultats');
+    
+    // Ocultamos los resultados previos cada vez que hacemos una nueva búsqueda
+    caixaResultats.style.display = 'none';
+
+    try {
+        // En una petición GET, adjuntamos la variable directamente en la URL
+        const resposta = await fetch(`http://127.0.0.1:8000/tractaments/consultar/?codi_tractament=${codi}`, {
+            method: 'GET', // Usamos GET
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const resultat = await resposta.json();
+
+        // 200 es el código HTTP de "Éxito" para consultas GET
+        if (resposta.status === 200) {
+            // Rellenamos el HTML con los datos que han llegado en resultat.data
+            document.getElementById('res_codi').innerText = resultat.data.codi_tractament;
+            document.getElementById('res_inici').innerText = resultat.data.data_inici;
+            document.getElementById('res_fi').innerText = resultat.data.data_fi_prevista;
+            document.getElementById('res_diagnostic').innerText = resultat.data.codi_diagnostic;
+            document.getElementById('res_indicacions').innerText = resultat.data.indicacions || 'Sense indicacions registrades';
+            
+            // Hacemos visible la caja de resultados
+            caixaResultats.style.display = 'block';
+            
+        } else {
+            // Aquí capturamos el Error 404 si no existe en BBDD
+            alert("❌ Error: " + resultat.missatge);
+        }
+
+    } catch (error) {
+        alert("❌ Error crític: No s'ha pogut connectar amb el servidor Django.");
+    }
+});
+</script>
+
+</body>
+</html>

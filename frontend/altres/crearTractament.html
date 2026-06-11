@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Front-end Desacoblat - Crear Tractament</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 400px; }
+        h2 { color: #333; margin-top: 0; text-align: center; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; color: #555; }
+        input, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Formulari Nou Tractament</h2>
+    
+    <form id="tractamentForm">
+        <label>Codi Tractament:</label>
+        <input type="text" id="codi_tractament" required pattern="TR\d{8}" maxlength="10" placeholder="TR12345678" title="El codi ha de començar per 'TR' seguit de 8 números">
+
+        <label>Data d'Inici:</label>
+        <input type="date" id="data_inici" required>
+
+        <label>Data Fi Prevista:</label>
+        <input type="date" id="data_fi_prevista" required>
+
+        <label>Codi Diagnòstic Associat:</label>
+        <input type="text" id="codi_diagnostic" required pattern="DG\d{8}" maxlength="10" placeholder="DG12345678" title="El codi ha de començar per 'DG' seguit de 8 números">
+
+        <label>Indicacions (Opcional):</label>
+        <textarea id="indicacions" rows="4" placeholder="Dosi, freqüència o comentaris..."></textarea>
+
+        <button type="submit">Enviar al Backend</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('tractamentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const dadesTractament = {
+        codi_tractament: document.getElementById('codi_tractament').value,
+        data_inici: document.getElementById('data_inici').value,
+        data_fi_prevista: document.getElementById('data_fi_prevista').value,
+        codi_diagnostic: document.getElementById('codi_diagnostic').value,
+        indicacions: document.getElementById('indicacions').value || null
+    };
+
+    try {
+        const resposta = await fetch('http://127.0.0.1:8000/tractaments/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadesTractament)
+        });
+
+        const resultat = await resposta.json();
+
+        if (resposta.status === 201) {
+            alert("🎉 Èxit: " + (resultat.message || resultat.missatge));
+            document.getElementById('tractamentForm').reset();
+        } else {
+            alert("❌ Error de validació: " + (resultat.message || resultat.missatge));
+        }
+
+    } catch (error) {
+        alert("❌ Error crític: No s'ha pogut connectar amb el servidor Django. Està encès?");
+    }
+});
+</script>
+
+</body>
+</html>
