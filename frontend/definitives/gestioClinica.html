@@ -1,350 +1,556 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-    <meta charset="UTF-8">
-    <title>HealthLog - Gestio Clinica</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 20px 25px; border-radius: 8px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .card.blau  { border-left: 5px solid #1a5276; }
-        .card.verd  { border-left: 5px solid #28a745; }
-        .card.taronja { border-left: 5px solid #e67e22; }
-        .card.lila  { border-left: 5px solid #8e44ad; }
-        h1 { color: #1a5276; margin-bottom: 5px; }
-        h2 { color: #1a5276; margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
-        label { display: block; margin: 8px 0 3px; font-weight: bold; color: #555; font-size: 14px; }
-        input, textarea, select { width: 100%; padding: 7px; box-sizing: border-box;
-                                   border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        textarea { height: 55px; resize: vertical; }
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        button { padding: 8px 18px; color: white; border: none; border-radius: 4px;
-                 cursor: pointer; font-size: 14px; }
-        .btn-blau  { background: #1a5276; }  .btn-blau:hover  { background: #154360; }
-        .btn-verd  { background: #28a745; }  .btn-verd:hover  { background: #218838; }
-        .btn-port  { background: #e67e22; }  .btn-port:hover  { background: #ca6f1e; }
-        .btn-lila  { background: #8e44ad; }  .btn-lila:hover  { background: #7d3c98; }
-        .btn-gris  { background: #888; }
-        .cita-item { padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px;
-                     margin: 5px 0; display: flex; justify-content: space-between;
-                     align-items: center; font-size: 14px; }
-        .cita-item.finalitzada { background: #eafaf1; border-color: #28a745; }
-        .cita-item.pendent    { background: #fef9e7; border-color: #f39c12; }
-        .estat { font-weight: bold; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
-        .estat-finalitzada { background: #28a745; color: white; }
-        .estat-pendent     { background: #f39c12; color: white; }
-        .estat-confirmada  { background: #1a5276; color: white; }
-        .info-box { background: #f0f5fb; padding: 10px 15px; border-radius: 6px;
-                    margin: 8px 0; font-size: 14px; }
-        .ok  { color: #28a745; font-weight: bold; }
-        .err { color: #c0392b; font-weight: bold; }
-        .back a { color: #1a5276; text-decoration: none; font-size: 14px; }
-        .hidden { display: none; }
-        .badge-info { background: #d5e8f3; color: #1a5276; padding: 2px 8px;
-                      border-radius: 10px; font-size: 12px; margin-left: 5px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthLog - Gestió Clínica</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    /* ========== MAQUETACIÓ ESPECÍFICA I ICONOGRAFIA ========== */
+    
+    /* Control de los iconos SVG vectorizados */
+    .icon {
+      width: 1.25em;
+      height: 1.25em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-flex;
+      vertical-align: text-bottom;
+      flex-shrink: 0;
+    }
+    .icon-sm { width: 1em; height: 1em; }
+    .icon-lg { width: 1.5em; height: 1.5em; }
+
+    /* Contenidor superior (Navbar de control del Metge) */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .doctor-profile-box {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      background: var(--brand-50);
+      padding: 6px var(--spacing-md);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+    }
+
+    /* Reixa modular en dues columnes */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: var(--spacing-xl);
+      padding: 0 var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Recuadres azulados para el menú izquierdo */
+    .menu-card-blue {
+      background: linear-gradient(145deg, var(--brand-50) 0%, #ffffff 100%);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.05);
+    }
+
+    .menu-card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--brand-600);
+      font-weight: 700;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .menu-card-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      color: var(--gray-700);
+      text-decoration: none;
+      font-weight: 600;
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .menu-card-link:hover {
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--brand-700);
+    }
+
+    /* Modificadors de color per als fluxos de targetes clíniques */
+    .card-clinical { border-left: 4px solid var(--brand-600); }
+    .card-diagnostic { border-left: 4px solid var(--success); }
+    .card-treatment { border-left: 4px solid #f59e0b; }
+    .card-prescription { border-left: 4px solid #8b5cf6; }
+
+    /* Estils de llistat interactiu de cites */
+    .cita-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      margin-top: var(--spacing-xs);
+      background: #ffffff;
+    }
+    .cita-item.finalitzada { background: var(--success-bg); border-color: rgba(16, 185, 129, 0.2); }
+    
+    .badge-status {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.02em;
+    }
+    .status-finalitzada { background: var(--success-bg); color: var(--success); }
+    .status-pendent { background: var(--warning-bg); color: var(--warning); }
+    
+    .info-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--gray-700);
+    }
+
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-<div class="container">
-    <div class="back"><a href="dashboard.html">Tornar al dashboard</a></div>
-    <h1>Gestio Clinica del Metge</h1>
 
-    <!-- SECCIO A: Buscar pacient -->
-    <div class="card blau">
-        <h2>Buscar Pacient</h2>
-        <label>DNI del Pacient:</label>
-        <input type="text" id="dni-pacient" placeholder="Ex: 95477263P"
-               oninput="this.value=this.value.toUpperCase()">
-        <div class="btn-row">
-            <button class="btn-blau" onclick="carregarPacient()">Carregar pacient</button>
-        </div>
+  <header class="top-header">
+    <div style="font-size: 1.4rem; font-weight: 800; color: var(--gray-900); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px;">
+      <svg class="icon icon-lg" style="color: var(--brand-600);" viewBox="0 0 24 24">
+        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+      </svg>
+      HealthLog
     </div>
-
-    <!-- SECCIO B: Info pacient + cites -->
-    <div id="sec-pacient" class="card blau hidden">
-        <h2>Pacient: <span id="nom-pacient"></span></h2>
-        <div id="info-pacient" class="info-box"></div>
-        <label style="margin-top:12px">Cites amb tu (finalitzades per diagnosticar):</label>
-        <div id="llista-cites"></div>
+    
+    <div class="doctor-profile-box">
+      <div style="text-align: right;">
+        <div id="nom-metge" style="font-weight: 700; color: var(--brand-900); font-size: 0.95rem;">Dr/a. -</div>
+        <div style="font-size: 0.75rem; color: var(--brand-600); font-weight: 500;">Personal Facultatiu</div>
+      </div>
+      <button class="btn btn-secondary" style="padding: var(--spacing-xs) var(--spacing-sm); font-size: 0.8rem; font-weight: 700;" onclick="localStorage.clear(); window.location.href='login.html';">
+        <svg class="icon icon-sm" style="margin-right: 4px;" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Tancar Sessió
+      </button>
     </div>
+  </header>
 
-    <!-- SECCIO C: Crear Diagnostic -->
-    <div id="sec-diagnostic" class="card verd hidden">
-        <h2>Nou Diagnostic <span id="lbl-cita-diag" class="badge-info"></span></h2>
-        <label>Codi Diagnostic (auto):</label>
-        <input type="text" id="codi-diag" readonly style="background:#f0f0f0">
-        <label>Descripcio:</label>
-        <input type="text" id="desc-diag" placeholder="Patologia observada...">
-        <label>Notes cliniques (opcional):</label>
-        <textarea id="notes-diag" placeholder="Observacions addicionals..."></textarea>
-        <div class="btn-row">
-            <button class="btn-verd" onclick="crearDiagnostic()">Crear Diagnostic</button>
-            <button class="btn-gris" onclick="tancarSeccio('sec-diagnostic')">Cancel·lar</button>
+  <div class="dashboard-grid">
+    
+    <nav>
+      <div class="menu-card-blue">
+        <div class="menu-card-title">Navegació Principal</div>
+        <a href="dashboard.html" class="menu-card-link">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Agenda i Torns
+        </a>
+      </div>
+
+      <div class="menu-card-blue">
+        <div class="menu-card-title">Gestió Clínic-Pacient</div>
+        <a href="llistatPacients.html" class="menu-card-link">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          Els Meus Pacients
+        </a>
+      </div>
+    </nav>
+
+    <main>
+      <div style="margin-bottom: var(--spacing-xl);">
+        <h1 style="margin-bottom: 2px; font-size: 1.75rem;">Mòdul de Gestió Clínica</h1>
+        <p style="color: var(--gray-500); font-size: 0.95rem;">Sincronització de l'historial, diagnòstics, pautes de tractaments i prescripció farmacèutica.</p>
+      </div>
+
+      <div class="card card-clinical" style="margin-bottom: var(--spacing-lg);">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-xs);">
+          <svg class="icon" style="color: var(--brand-600);" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          Carregar Targeta Sanitària (DNI)
+        </h3>
+        <div style="display: flex; gap: var(--spacing-md); align-items: flex-end;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">DNI del Pacient</label>
+            <input type="text" id="dni-pacient" class="form-control" placeholder="Ex: 95477263P" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <button class="btn btn-primary" onclick="carregarPacient()" style="padding: var(--spacing-sm) var(--spacing-lg); font-weight: 600;">
+            Sincronitzar Historial
+          </button>
         </div>
-        <p id="msg-diag" class="ok"></p>
-    </div>
+      </div>
 
-    <!-- SECCIO D: Crear Tractament -->
-    <div id="sec-tractament" class="card taronja hidden">
-        <h2>Nou Tractament <span id="lbl-diag-trac" class="badge-info"></span></h2>
-        <label>Codi Tractament (auto):</label>
-        <input type="text" id="codi-trac" readonly style="background:#f0f0f0">
-        <label>Data inici:</label>
-        <input type="date" id="data-inici-trac">
-        <label>Data fi prevista:</label>
-        <input type="date" id="data-fi-trac">
-        <label>Indicacions:</label>
-        <textarea id="indicacions-trac" placeholder="Indicacions terapeutiques generals..."></textarea>
-        <div class="btn-row">
-            <button class="btn-port" onclick="crearTractament()">Crear Tractament</button>
-            <button class="btn-gris" onclick="tancarSeccio('sec-tractament')">Cancel·lar</button>
+      <div id="sec-pacient" class="card card-clinical hidden" style="margin-bottom: var(--spacing-lg);">
+        <h3 style="margin-bottom: var(--spacing-md); color: var(--brand-800);">
+          👤 Pacient: <span id="nom-pacient" style="color: var(--gray-900);"></span>
+        </h3>
+        <div id="info-pacient" class="info-box" style="margin-bottom: var(--spacing-md);"></div>
+        
+        <label class="form-label" style="font-weight: 700;">Visites Clinificades Pendents de Diagnòstic:</label>
+        <div id="llista-cites" style="margin-top: var(--spacing-xs);"></div>
+      </div>
+
+      <div id="sec-diagnostic" class="card card-diagnostic hidden" style="margin-bottom: var(--spacing-lg);">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; justify-content: space-between;">
+          <span style="display: flex; align-items: center; gap: 6px; color: var(--success);">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Nou Diagnòstic Clínic
+          </span>
+          <span id="lbl-cita-diag" style="font-size: 0.8rem; background: var(--success-bg); color: var(--success); padding: 4px 10px; border-radius: var(--radius-sm); font-weight: 700;"></span>
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+          <div class="form-group">
+            <label class="form-label">Codi Diagnòstic (Automatitzat)</label>
+            <input type="text" id="codi-diag" readonly style="background: var(--gray-50); font-weight: 700; color: var(--gray-600);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripció de la Patologia Observada</label>
+            <input type="text" id="desc-diag" class="form-control" placeholder="Ex: Hipertensió arterial essencial, Grip comuna...">
+          </div>
         </div>
-        <p id="msg-trac" class="ok"></p>
-    </div>
-
-    <!-- SECCIO E: Crear Prescripcio -->
-    <div id="sec-prescripcio" class="card lila hidden">
-        <h2>Nova Prescripcio <span id="lbl-trac-presc" class="badge-info"></span></h2>
-        <label>Codi Prescripcio (auto):</label>
-        <input type="text" id="codi-presc" readonly style="background:#f0f0f0">
-        <label>Cercar Medicament (nom comercial):</label>
-        <div style="display:flex;gap:8px">
-            <input type="text" id="cerca-med" placeholder="Ex: Ibuprofèn Cinfa">
-            <button class="btn-lila" onclick="cercarMedicament()" style="width:auto;white-space:nowrap">Cercar</button>
+        <div class="form-group" style="margin-bottom: var(--spacing-md);">
+          <label class="form-label">Notes Clíniques Internes (Opcional)</label>
+          <textarea id="notes-diag" class="form-control" style="height: 70px;" placeholder="Simptomatologia descrita, observacions físiques exploratòries..."></textarea>
         </div>
-        <div id="resultats-med" style="margin-top:6px"></div>
-        <label>Codi Nacional seleccionat:</label>
-        <input type="text" id="codi-nacional" placeholder="Ex: CN125611" readonly style="background:#f0f0f0">
-        <label>Dosi:</label>
-        <input type="text" id="dosi-presc" placeholder="Ex: 400mg">
-        <label>Frequencia:</label>
-        <input type="text" id="freq-presc" placeholder="Ex: Cada 8 hores">
-        <label>Durada:</label>
-        <input type="text" id="durada-presc" placeholder="Ex: 7 dies">
-        <div class="btn-row">
-            <button class="btn-lila" onclick="crearPrescripcio()">Crear Prescripcio</button>
-            <button class="btn-gris" onclick="tancarSeccio('sec-prescripcio')">Cancel·lar</button>
+        
+        <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+          <button class="btn btn-primary" style="background: var(--success); border-color: var(--success); font-weight: 600;" onclick="crearDiagnostic()">
+            Emetre Diagnòstic
+          </button>
+          <button class="btn btn-secondary" onclick="tancarSeccio('sec-diagnostic')">Cancel·lar</button>
+          <div id="msg-diag" style="font-size: 0.9rem; font-weight: 700; color: var(--success);"></div>
         </div>
-        <p id="msg-presc" class="ok"></p>
-    </div>
+      </div>
 
-</div>
-<script>
-var API    = 'http://127.0.0.1:8000';
-var usuari = JSON.parse(localStorage.getItem('usuari') || 'null');
-if (!usuari) window.location.href = 'login.html';
+      <div id="sec-tractament" class="card card-treatment hidden" style="margin-bottom: var(--spacing-lg);">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; justify-content: space-between;">
+          <span style="display: flex; align-items: center; gap: 6px; color: #d97706;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            Nou Tractament Terapèutic
+          </span>
+          <span id="lbl-diag-trac" style="font-size: 0.8rem; background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: var(--radius-sm); font-weight: 700;"></span>
+        </h3>
 
-// Llegir DNI de la URL si ve des de llistatPacients
-var params = new URLSearchParams(window.location.search);
-var dniUrl = params.get('dni');
-if (dniUrl) {
-    window.addEventListener('load', function() {
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+          <div class="form-group">
+            <label class="form-label">Codi Tractament</label>
+            <input type="text" id="codi-trac" readonly style="background: var(--gray-50); font-weight: 700; color: var(--gray-600);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data Inici</label>
+            <input type="date" id="data-inici-trac" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data Fi Prevista</label>
+            <input type="date" id="data-fi-trac" class="form-control">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: var(--spacing-md);">
+          <label class="form-label">Indicacions Terapèutiques Generals</label>
+          <textarea id="indicacions-trac" class="form-control" style="height: 70px;" placeholder="Repòs domèstic, rehidratació constant, pautes dietètiques administratives..."></textarea>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+          <button class="btn btn-primary" style="background: #d97706; border-color: #d97706; font-weight: 600;" onclick="crearTractament()">
+            Establir Tractament
+          </button>
+          <button class="btn btn-secondary" onclick="tancarSeccio('sec-tractament')">Cancel·lar</button>
+          <div id="msg-trac" style="font-size: 0.9rem; font-weight: 700; color: #d97706;"></div>
+        </div>
+      </div>
+
+      <div id="sec-prescripcio" class="card card-prescription hidden">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; justify-content: space-between;">
+          <span style="display: flex; align-items: center; gap: 6px; color: #7c3aed;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18"></path></svg>
+            Nova Prescripció de Medicaments
+          </span>
+          <span id="lbl-trac-presc" style="font-size: 0.8rem; background: #ede9fe; color: #7c3aed; padding: 4px 10px; border-radius: var(--radius-sm); font-weight: 700;"></span>
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+          <div class="form-group">
+            <label class="form-label">Codi Prescripció</label>
+            <input type="text" id="codi-presc" readonly style="background: var(--gray-50); font-weight: 700; color: var(--gray-600);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cercar Catàleg Farmacèutic (Nom Comercial)</label>
+            <div style="display:flex; gap:8px">
+              <input type="text" id="cerca-med" class="form-control" placeholder="Ex: Ibuprofèn, Paracetamol...">
+              <button class="btn btn-primary" style="background: #7c3aed; border-color: #7c3aed; width:auto; white-space:nowrap; font-weight:600;" onclick="cercarMedicament()">
+                Cercar Vademècum
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="resultats-med" style="margin-bottom: var(--spacing-md);"></div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+          <div class="form-group">
+            <label class="form-label">Codi Nacional Seleccionat</label>
+            <input type="text" id="codi-nacional" readonly style="background: var(--gray-50); font-weight: 600;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dosi</label>
+            <input type="text" id="dosi-presc" class="form-control" placeholder="Ex: 400mg, 1 comprimit">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Freqüència</label>
+            <input type="text" id="freq-presc" class="form-control" placeholder="Ex: Cada 8 hores">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Durada</label>
+            <input type="text" id="durada-presc" class="form-control" placeholder="Ex: 7 dies">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+          <button class="btn btn-primary" style="background: #7c3aed; border-color: #7c3aed; font-weight: 600;" onclick="crearPrescripcio()">
+            Concloure i Validar Recepta
+          </button>
+          <button class="btn btn-secondary" onclick="tancarSeccio('sec-prescripcio')">Cancel·lar</button>
+          <div id="msg-presc" style="font-size: 0.9rem; font-weight: 700;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    var API = 'http://localhost:8000';
+    var usuari = JSON.parse(localStorage.getItem('usuari') || 'null');
+    if (!usuari) { window.location.href = 'login.html'; }
+
+    document.getElementById('nom-metge').textContent = "Dr/a. " + usuari.nom;
+
+    // LÈGIR ENLLAÇ ENTRE PANTALLES: Captura des de URL o des de la clau guardada per llistatPacients
+    var params = new URLSearchParams(window.location.search);
+    var dniUrl = params.get('dni') || localStorage.getItem('pacient_dni');
+    
+    if (dniUrl) {
+      window.addEventListener('DOMContentLoaded', function() {
         document.getElementById('dni-pacient').value = dniUrl.toUpperCase();
         carregarPacient();
-    });
-}
+        localStorage.removeItem('pacient_dni'); // Neteja el canal un cop consumit
+      });
+    }
 
-var codiCitaActual   = null;
-var codiDiagActual   = null;
-var codiTracActual   = null;
+    var codiCitaActual = null;
+    var codiDiagActual = null;
+    var codiTracActual = null;
 
-function genCodi(prefix, digits) {
-    var n = '';
-    for (var i = 0; i < digits; i++) n += Math.floor(Math.random() * 10);
-    return prefix + n;
-}
+    // Icons SVG auxiliars injectats dinàmicament
+    const iconAlert = '<svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--warning); margin-right:4px;"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+    const iconCheck = '<svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--success); margin-right:4px;"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
 
-function tancarSeccio(id) {
-    document.getElementById(id).classList.add('hidden');
-}
+    function genCodi(prefix, digits) {
+      var n = '';
+      for (var i = 0; i < digits; i++) n += Math.floor(Math.random() * 10);
+      return prefix + n;
+    }
 
-function mostrar(id) {
-    document.getElementById(id).classList.remove('hidden');
-    document.getElementById(id).scrollIntoView({behavior: 'smooth'});
-}
+    function tancarSeccio(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
 
-// ── A: Carregar pacient ──────────────────────────────────────────────────────
-async function carregarPacient() {
-    var dni = document.getElementById('dni-pacient').value.trim().toUpperCase();
-    if (!dni) { alert('Introdueix el DNI del pacient.'); return; }
+    function mostrar(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+    }
 
-    try {
-        var r    = await fetch(API + '/historial/?dni=' + dni + '&dni_metge=' + usuari.dni);
+    async function carregarPacient() {
+      var dni = document.getElementById('dni-pacient').value.trim().toUpperCase();
+      if (!dni) { alert('Introdueix el DNI del pacient.'); return; }
+
+      try {
+        var r = await fetch(API + '/historial/?dni=' + dni + '&dni_metge=' + usuari.dni);
         var data = await r.json();
 
         if (data.status !== 'exit' && !data.status.includes('xit')) {
-            alert('Error: ' + (data.missatge || 'Pacient no trobat.'));
-            return;
+          alert('Error: ' + (data.missatge || 'Pacient no localitzat en el sistema central.'));
+          return;
         }
 
         var h = data.historial;
         document.getElementById('nom-pacient').textContent = h.nom_pacient;
         document.getElementById('info-pacient').innerHTML =
-            '<b>Grup sanguini:</b> ' + h.grup_sanguini +
-            ' &nbsp;|&nbsp; <b>Al·lergies:</b> ' + (h.allergies || 'Cap') +
-            ' &nbsp;|&nbsp; <b>Malalties croniques:</b> ' + (h.malalties_croniques || 'Cap');
+          '📌 <b>Grup sanguini:</b> <code style="background:#fff; padding:2px 6px; border-radius:4px; font-weight:600;">' + h.grup_sanguini + '</code> &nbsp;|&nbsp; ⚠️ <b>Al·lèrgies:</b> ' + (h.allergies || 'Cap registrada') +
+          ' &nbsp;|&nbsp; 📋 <b>Malalties cròniques:</b> ' + (h.malalties_croniques || 'Cap diagnòstic crònic');
 
         var cites = data.historial_clinic_complet || [];
-        var html  = '';
+        var html = '';
         cites.forEach(function(c) {
-            var cls = 'cita-item ' + c.estat;
-            html += '<div class="' + cls + '">';
-            html += '<span><b>' + c.codi_cita + '</b> &mdash; ' + c.data + ' ' + c.hora
-                 + ' <span class="estat estat-' + c.estat + '">' + c.estat + '</span></span>';
-            if (c.estat === 'finalitzada') {
-                html += '<button class="btn-verd" style="padding:4px 10px;font-size:12px" '
-                      + 'onclick="obrirDiagnostic(\'' + c.codi_cita + '\')">+ Diagnostic</button>';
-            }
-            html += '</div>';
+          var cls = 'cita-item ' + c.estat;
+          html += '<div class="' + cls + '">';
+          html += '<span><b>Codi: ' + c.codi_cita + '</b> &mdash; data ' + c.data + ' a les ' + c.hora + 
+                  ' <span class="badge-status status-' + c.estat + '">' + c.estat + '</span></span>';
+          if (c.estat === 'finalitzada') {
+            html += '<button class="btn btn-primary" style="background:var(--success); border-color:var(--success); padding:4px 12px; font-size:0.8rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;" '
+                  + 'onclick="obrirDiagnostic(\'' + c.codi_cita + '\')">'
+                  + '<svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>Iniciar Diagnòstic</button>';
+          }
+          html += '</div>';
         });
-        if (!html) html = '<p style="color:#999">Cap cita amb aquest metge.</p>';
+        if (!html) html = '<p style="color:var(--gray-500); font-style:italic; padding:10px 0;">Cap cita històrica agendada amb vostè.</p>';
         document.getElementById('llista-cites').innerHTML = html;
         mostrar('sec-pacient');
 
-    } catch(e) { alert('Error de connexio amb el servidor.'); }
-}
-
-// ── C: Diagnostic ────────────────────────────────────────────────────────────
-function obrirDiagnostic(codiCita) {
-    codiCitaActual = codiCita;
-    document.getElementById('codi-diag').value = genCodi('DG', 8);
-    document.getElementById('desc-diag').value = '';
-    document.getElementById('notes-diag').value = '';
-    document.getElementById('msg-diag').textContent = '';
-    document.getElementById('lbl-cita-diag').textContent = 'Cita: ' + codiCita;
-    mostrar('sec-diagnostic');
-}
-
-async function crearDiagnostic() {
-    var dades = {
-        codi_diagnostic : document.getElementById('codi-diag').value,
-        descripcio      : document.getElementById('desc-diag').value.trim(),
-        notes_cliniques : document.getElementById('notes-diag').value.trim(),
-        codi_cita       : codiCitaActual
-    };
-    if (!dades.descripcio) { alert('La descripcio es obligatoria.'); return; }
-    try {
-        var r       = await fetch(API + '/diagnostics/', {
-            method : 'POST', headers: {'Content-Type': 'application/json'},
-            body   : JSON.stringify(dades)
-        });
-        var resultat = await r.json();
-        if (r.status === 201) {
-            codiDiagActual = dades.codi_diagnostic;
-            document.getElementById('msg-diag').textContent =
-                'Diagnostic ' + codiDiagActual + ' creat correctament.';
-            // Prepara tractament
-            document.getElementById('codi-trac').value = genCodi('TR', 8);
-            document.getElementById('data-inici-trac').value = new Date().toISOString().split('T')[0];
-            var fi = new Date(); fi.setMonth(fi.getMonth() + 1);
-            document.getElementById('data-fi-trac').value = fi.toISOString().split('T')[0];
-            document.getElementById('indicacions-trac').value = '';
-            document.getElementById('msg-trac').textContent = '';
-            document.getElementById('lbl-diag-trac').textContent = 'Diagnostic: ' + codiDiagActual;
-            mostrar('sec-tractament');
-        } else {
-            alert('Error: ' + (resultat.missatge || resultat.message || 'Error desconegut'));
-        }
-    } catch(e) { alert('Error de connexio.'); }
-}
-
-// ── D: Tractament ────────────────────────────────────────────────────────────
-async function crearTractament() {
-    var dades = {
-        codi_tractament  : document.getElementById('codi-trac').value,
-        data_inici       : document.getElementById('data-inici-trac').value,
-        data_fi_prevista : document.getElementById('data-fi-trac').value,
-        indicacions      : document.getElementById('indicacions-trac').value.trim(),
-        codi_diagnostic  : codiDiagActual
-    };
-    if (!dades.data_inici || !dades.data_fi_prevista) {
-        alert('Les dates son obligatories.'); return;
+      } catch(e) { alert('Error de connexió de xarxa en carregar l\'historial.'); }
     }
-    try {
-        var r        = await fetch(API + '/tractaments/', {
-            method : 'POST', headers: {'Content-Type': 'application/json'},
-            body   : JSON.stringify(dades)
+
+    function obrirDiagnostic(codiCita) {
+      codiCitaActual = codiCita;
+      document.getElementById('codi-diag').value = genCodi('DG', 8);
+      document.getElementById('desc-diag').value = '';
+      document.getElementById('notes-diag').value = '';
+      document.getElementById('msg-diag').innerHTML = '';
+      document.getElementById('lbl-cita-diag').textContent = 'Vinculat a Cita: ' + codiCita;
+      mostrar('sec-diagnostic');
+    }
+
+    async function crearDiagnostic() {
+      var dades = {
+        codi_diagnostic: document.getElementById('codi-diag').value,
+        descripcio: document.getElementById('desc-diag').value.trim(),
+        notes_cliniques: document.getElementById('notes-diag').value.trim(),
+        codi_cita: codiCitaActual
+      };
+      if (!dades.descripcio) { alert('La descripció del diagnòstic és obligatòria.'); return; }
+      try {
+        var r = await fetch(API + '/diagnostics/', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(dades)
         });
         var resultat = await r.json();
         if (r.status === 201) {
-            codiTracActual = dades.codi_tractament;
-            document.getElementById('msg-trac').textContent =
-                'Tractament ' + codiTracActual + ' creat correctament.';
-            // Prepara prescripcio
-            document.getElementById('codi-presc').value = genCodi('PRE', 8);
-            document.getElementById('codi-nacional').value = '';
-            document.getElementById('dosi-presc').value = '';
-            document.getElementById('freq-presc').value = '';
-            document.getElementById('durada-presc').value = '';
-            document.getElementById('msg-presc').textContent = '';
-            document.getElementById('lbl-trac-presc').textContent = 'Tractament: ' + codiTracActual;
-            mostrar('sec-prescripcio');
+          codiDiagActual = dades.codi_diagnostic;
+          document.getElementById('msg-diag').innerHTML = iconCheck + ' Diagnòstic emès correctament.';
+          
+          // Salt automàtic seqüencial: Tractament
+          document.getElementById('codi-trac').value = genCodi('TR', 8);
+          document.getElementById('data-inici-trac').value = new Date().toISOString().split('T')[0];
+          var fi = new Date(); fi.setMonth(fi.getMonth() + 1);
+          document.getElementById('data-fi-trac').value = fi.toISOString().split('T')[0];
+          document.getElementById('indicacions-trac').value = '';
+          document.getElementById('msg-trac').innerHTML = '';
+          document.getElementById('lbl-diag-trac').textContent = 'Per a Diagnòstic: ' + codiDiagActual;
+          mostrar('sec-tractament');
         } else {
-            alert('Error: ' + (resultat.message || resultat.missatge || 'Error desconegut'));
+          alert('Error: ' + (resultat.missatge || 'Error emetent el diagnòstic central.'));
         }
-    } catch(e) { alert('Error de connexio.'); }
-}
+      } catch(e) { alert('Error de comunicació de xarxa.'); }
+    }
 
-// ── E: Prescripcio ───────────────────────────────────────────────────────────
-async function cercarMedicament() {
-    var nom = document.getElementById('cerca-med').value.trim();
-    if (!nom) { alert('Introdueix un nom per cercar.'); return; }
-    try {
-        var r    = await fetch(API + '/medicaments/?nom_comercial=' + encodeURIComponent(nom));
+    async function crearTractament() {
+      var dades = {
+        codi_tractament: document.getElementById('codi-trac').value,
+        data_inici: document.getElementById('data-inici-trac').value,
+        data_fi_prevista: document.getElementById('data-fi-trac').value,
+        indicacions: document.getElementById('indicacions-trac').value.trim(),
+        codi_diagnostic: codiDiagActual
+      };
+      if (!dades.data_inici || !dades.data_fi_prevista) { alert('Les dates d\'inici i finalització són obligatòries.'); return; }
+      try {
+        var r = await fetch(API + '/tractaments/', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(dades)
+        });
+        var resultat = await r.json();
+        if (r.status === 201) {
+          codiTracActual = dades.codi_tractament;
+          document.getElementById('msg-trac').innerHTML = iconCheck + ' Tractament establert correctament.';
+          
+          // Salt automàtic seqüencial: Prescripció
+          document.getElementById('codi-presc').value = genCodi('PRE', 8);
+          document.getElementById('codi-nacional').value = '';
+          document.getElementById('dosi-presc').value = '';
+          document.getElementById('freq-presc').value = '';
+          document.getElementById('durada-presc').value = '';
+          document.getElementById('msg-presc').innerHTML = '';
+          document.getElementById('lbl-trac-presc').textContent = 'Per a Tractament: ' + codiTracActual;
+          mostrar('sec-prescripcio');
+        } else {
+          alert('Error: ' + (resultat.message || 'Error processant el tractament terapèutic.'));
+        }
+      } catch(e) { alert('Error de connexió.'); }
+    }
+
+    async function cercarMedicament() {
+      var nom = document.getElementById('cerca-med').value.trim();
+      if (!nom) { alert('Introdueix una paraula clau o principi actiu.'); return; }
+      try {
+        var r = await fetch(API + '/medicaments/?nom_comercial=' + encodeURIComponent(nom));
         var data = await r.json();
-        var div  = document.getElementById('resultats-med');
+        var div = document.getElementById('resultats-med');
         if (data.medicaments && data.medicaments.length > 0) {
-            div.innerHTML = data.medicaments.slice(0, 8).map(function(m) {
-                return '<div style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;margin:3px 0;'
-                     + 'cursor:pointer;font-size:13px;background:#fafafa" '
-                     + 'onclick="seleccionarMed(\'' + m.codi_nacional + '\',\'' + m.nom_comercial + '\')">'
-                     + '<b>' + m.codi_nacional + '</b> — ' + m.nom_comercial + ' (' + m.principi_actiu + ')'
-                     + '</div>';
-            }).join('');
+          div.innerHTML = data.medicaments.slice(0, 5).map(function(m) {
+            return '<div style="padding:8px 12px; border:1px solid var(--gray-200); border-radius:var(--radius-sm); margin:4px 0; '
+                 + 'cursor:pointer; font-size:0.9rem; background:#fff; transition:background 0.2s;" class="med-item-row" '
+                 + 'onclick="seleccionarMed(\'' + m.codi_nacional + '\',\'' + m.nom_comercial + '\')">'
+                 + '📋 <b>CN ' + m.codi_nacional + '</b> &mdash; ' + m.nom_comercial + ' <span style="color:var(--gray-500); font-size:0.8rem;">(' + m.principi_actiu + ')</span>'
+                 + '</div>';
+          }).join('');
         } else {
-            div.innerHTML = '<p style="color:#999;font-size:13px">Cap medicament trobat.</p>';
+          div.innerHTML = '<div style="color:var(--gray-500); font-size:0.9rem; padding: 4px 0;">Cap fàrmac localitzat al catàleg central.</div>';
         }
-    } catch(e) { alert('Error de connexio.'); }
-}
-
-function seleccionarMed(codi, nom) {
-    document.getElementById('codi-nacional').value = codi;
-    document.getElementById('resultats-med').innerHTML =
-        '<p style="color:#28a745;font-size:13px">Seleccionat: <b>' + nom + '</b> (' + codi + ')</p>';
-}
-
-async function crearPrescripcio() {
-    var dades = {
-        codi_prescripcio: document.getElementById('codi-presc').value,
-        codi_tractament : codiTracActual,
-        codi_nacional   : document.getElementById('codi-nacional').value.trim(),
-        dosi            : document.getElementById('dosi-presc').value.trim(),
-        frequencia      : document.getElementById('freq-presc').value.trim(),
-        durada          : document.getElementById('durada-presc').value.trim(),
-        estat           : 'activa'
-    };
-    if (!dades.codi_nacional || !dades.dosi || !dades.frequencia || !dades.durada) {
-        alert('Omple tots els camps de la prescripcio.'); return;
+      } catch(e) { alert('Error de xarxa en connectar amb el Vademècum.'); }
     }
-    try {
-        var r        = await fetch(API + '/prescripcions/', {
-            method : 'POST', headers: {'Content-Type': 'application/json'},
-            body   : JSON.stringify(dades)
+
+    function seleccionarMed(codi, nom) {
+      document.getElementById('codi-nacional').value = codi;
+      document.getElementById('resultats-med').innerHTML =
+        '<div style="color:var(--success); font-size:0.9rem; font-weight:600; display:flex; align-items:center; gap:4px;">' + iconCheck + ' Seleccionat: ' + nom + ' (CN ' + codi + ')</div>';
+    }
+
+    async function crearPrescripcio() {
+      var dades = {
+        codi_prescripcio: document.getElementById('codi-presc').value,
+        codi_tractament: codiTracActual,
+        codi_nacional: document.getElementById('codi-nacional').value.trim(),
+        dosi: document.getElementById('dosi-presc').value.trim(),
+        frequencia: document.getElementById('freq-presc').value.trim(),
+        durada: document.getElementById('durada-presc').value.trim(),
+        estat: 'activa'
+      };
+      if (!dades.codi_nacional || !dades.dosi || !dades.frequencia || !dades.durada) {
+        alert('Tots els camps de la prescripció farmacològica són obligatoris.'); return;
+      }
+      try {
+        var r = await fetch(API + '/prescripcions/', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(dades)
         });
         var resultat = await r.json();
-        var msg      = document.getElementById('msg-presc');
+        var msg = document.getElementById('msg-presc');
         if (r.status === 201) {
-            msg.className   = 'ok';
-            msg.textContent = 'Prescripcio creada! Codi: ' + dades.codi_prescripcio;
-            alert('Flux complet: Diagnostic -> Tractament -> Prescripcio creats correctament.');
+          msg.style.color = 'var(--success)';
+          msg.innerHTML = iconCheck + ' Prescripció reeixida activa en targeta sanitària.';
+          alert('Flux Clínic Finalitzat amb Èxit:\nDiagnòstic -> Tractament -> Recepta mèdica emesa correctament.');
         } else {
-            msg.className   = 'err';
-            msg.textContent = 'Error: ' + (resultat.missatge || 'Error desconegut');
-            alert('Error: ' + (resultat.missatge || 'Error desconegut'));
+          msg.style.color = 'var(--danger)';
+          msg.innerHTML = '❌ Error: ' + (resultat.missatge || 'Error central farmacèutic.');
         }
-    } catch(e) { alert('Error de connexio.'); }
-}
-</script>
+      } catch(e) { alert('Error crític de comunicació amb el servidor farmacèutic.'); }
+    }
+  </script>
 </body>
 </html>
