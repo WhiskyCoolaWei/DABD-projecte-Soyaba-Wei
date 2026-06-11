@@ -8,7 +8,6 @@
   <style>
     /* ========== MAQUETACIÓ ESPECÍFICA I ICONOGRAFIA ========== */
     
-    /* Control de los iconos SVG */
     .icon {
       width: 1.25em;
       height: 1.25em;
@@ -99,6 +98,11 @@
       background: rgba(14, 165, 233, 0.1);
       color: var(--brand-700);
     }
+
+    .form-control.is-invalid {
+      border-color: var(--danger) !important;
+      background-color: rgba(239, 68, 68, 0.04) !important;
+    }
   </style>
 </head>
 <body>
@@ -162,7 +166,7 @@
       <div class="card" style="margin-bottom: var(--spacing-lg); border-left: 4px solid var(--brand-600);">
         <h3 style="margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
           <svg class="icon" style="color: var(--brand-600);" viewBox="0 0 24 24"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
-          El teu Torn d'Avui
+          Els Teus Torns i Horaris Registrats
         </h3>
         <div id="info-torns" style="color: var(--gray-700); font-size: 0.95rem; line-height: 1.5;">
           Cercant assignació de centre i quadrants horaris...
@@ -182,22 +186,24 @@
           </div>
           <div class="form-group">
             <label class="form-label">Centre Assignat</label>
-            <select id="ct-centre" class="form-control" onchange="actualitzarVisibilitatTorn()"></select>
+            <select id="ct-centre" class="form-control" onchange="actualitzarVisibilitatTorn(); actualitzarHoresDisponibles();"></select>
           </div>
           <div class="form-group">
             <label class="form-label">Data de la Cita</label>
-            <input type="date" id="ct-data" class="form-control">
+            <input type="date" id="ct-data" class="form-control" onchange="actualitzarVisibilitatTorn(); actualitzarHoresDisponibles();">
           </div>
           <div class="form-group">
             <label class="form-label">Hora de la Visita</label>
-            <input type="time" id="ct-hora" class="form-control">
+            <select id="ct-hora" class="form-control">
+              <option value="">Selecciona primer centre i data...</option>
+            </select>
           </div>
         </div>
         
         <div id="fila-torns" style="display: none; background-color: var(--warning-bg); border: 1px solid rgba(245,158,11,0.3); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm); margin-bottom: var(--spacing-md); font-size: 0.9rem; color: var(--warning); font-weight: 500;">
           <div style="display: flex; align-items: center; gap: 6px;">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            Alerta del Sistema: No constes en cap quadrant de guàrdia ni torn registrat per a aquest centre escollit.
+            <span id="text-alerta-torn">Alerta del Sistema: No constes en cap quadrant de guàrdia ni torn registrat per a aquest centre/dia escollit.</span>
           </div>
         </div>
 
@@ -225,7 +231,7 @@
             </tr>
           </thead>
           <tbody id="taula-cites">
-            </tbody>
+          </tbody>
         </table>
       </div>
     </main>
@@ -239,14 +245,26 @@
     document.getElementById('nom-metge').textContent = "Dr/a. " + usuari.nom;
 
     var TORNS_METGE = [];
+    var CITES_EXISTENTS = [];
 
-    // Strings SVG per a injecció JavaScript
     const iconPin = '<svg class="icon icon-sm" style="color: var(--brand-600); margin-right:4px;" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>';
     const iconCheck = '<svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
     const iconX = '<svg class="icon" viewBox="0 0 24 24"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
     const iconAlert = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
 
+    // Mapeig de dies JS (0=Diumenge, 1=Dilluns...) als strings habituals de la base de dades
+    const DIES_SETMANA_MAP = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
+
     function statusOk(s) { return s === 'èxit' || s === 'success' || s === 'ok'; }
+
+    // En carregar la pàgina ens assegurem de fixar la data d'avui com a valor inicial del formulari
+    function fixarDataAvui() {
+      var avui = new Date();
+      var dd = String(avui.getDate()).padStart(2, '0');
+      var mm = String(avui.getMonth() + 1).padStart(2, '0');
+      var yyyy = avui.getFullYear();
+      document.getElementById('ct-data').value = yyyy + '-' + mm + '-' + dd;
+    }
 
     async function carregarTorns() {
       try {
@@ -261,25 +279,63 @@
           return;
         }
         TORNS_METGE = d.torns;
+        
         div.innerHTML = d.torns.map(function(t){
-          return '<div style="margin-bottom: 6px; display:flex; align-items:center;">' + iconPin + ' <b>' + t.nom_centre + '</b> &nbsp;— Sala de Consulta: <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-family:inherit; font-weight:600; margin-left:4px;">' + t.codi_sala + '</code> &nbsp;(Horari: De ' + t.hora_inici + ' a ' + t.hora_fi + ')</div>';
+          var cadenaDia = t.dia_setmana ? ' (Cada ' + t.dia_setmana + ')' : '';
+          return '<div style="margin-bottom: 6px; display:flex; align-items:center;">' + iconPin + ' <b>' + t.nom_centre + '</b>' + cadenaDia + ' &nbsp;— Sala: <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-weight:600; margin-left:4px;">' + t.codi_sala + '</code> &nbsp;(De ' + t.hora_inici + ' a ' + t.hora_fi + ')</div>';
         }).join('');
 
+        // Evitar duplicats al selector de centres
+        var centresAfegits = [];
         d.torns.forEach(function(t){
-          var o = document.createElement('option');
-          o.value = t.codi_centre; o.textContent = t.nom_centre;
-          sel.appendChild(o);
+          if (!centresAfegits.includes(t.codi_centre)) {
+            centresAfegits.push(t.codi_centre);
+            var o = document.createElement('option');
+            o.value = t.codi_centre; o.textContent = t.nom_centre;
+            sel.appendChild(o);
+          }
         });
+
         actualitzarVisibilitatTorn();
+        actualitzarHoresDisponibles();
       } catch(e) {
         document.getElementById('info-torns').innerHTML = '<div style="color:var(--danger); display:flex; align-items:center; gap:6px;">' + iconX + 'Error carregant dades del quadrant clínic.</div>';
       }
     }
 
+    // NOVA CORRECCIÓ CLAU: Validar si el metge té torn el dia específic triat o avui
+    function obtenirTornDiaI_Centre(centreCodi, dataTriada) {
+      if (!dataTriada) return null;
+      
+      var dataObj = new Date(dataTriada);
+      var diaSetmanaTriat = DIES_SETMANA_MAP[dataObj.getDay()]; // Exemple: "dimarts"
+
+      return TORNS_METGE.find(function(t) {
+        var coincideixCentre = t.codi_centre === centreCodi;
+        // Si el backend no té camp 'dia_setmana', es dóna per vàlid per compatibilitat de torn diari. 
+        // Si en té, es valida estrictament el dia de la setmana.
+        var coincideixDia = !t.dia_setmana || (t.dia_setmana.toLowerCase() === diaSetmanaTriat);
+        return coincideixCentre && coincideixDia;
+      });
+    }
+
     function actualitzarVisibilitatTorn() {
       var c = document.getElementById('ct-centre').value;
-      var téTorn = TORNS_METGE.some(function(t){ return t.codi_centre === c; });
-      document.getElementById('fila-torns').style.display = téTorn ? 'none' : 'block';
+      var d = document.getElementById('ct-data').value;
+      var tornEfectiu = obtenirTornDiaI_Centre(c, d);
+      
+      var filaAlerta = document.getElementById('fila-torns');
+      if (tornEfectiu) {
+        filaAlerta.style.display = 'none';
+      } else {
+        filaAlerta.style.display = 'block';
+        if (!d) {
+          document.getElementById('text-alerta-torn').textContent = "Alerta del Sistema: Si us plau, especifica una data vàlida per comprovar els torns.";
+        } else {
+          var diaNom = DIES_SETMANA_MAP[new Date(d).getDay()];
+          document.getElementById('text-alerta-torn').textContent = "Alerta del Sistema: No constes en cap quadrant de guàrdia ni tens torn assignat un " + diaNom + " en aquest centre.";
+        }
+      }
     }
 
     async function carregarCitesProximes() {
@@ -288,11 +344,16 @@
         var d = await r.json();
         var tb = document.getElementById('taula-cites');
         tb.innerHTML = '';
-        if (!d.cites || d.cites.length === 0) {
+        
+        CITES_EXISTENTS = d.cites || [];
+
+        if (CITES_EXISTENTS.length === 0) {
           tb.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--gray-500); padding: var(--spacing-lg) 0;">No tens visites agendades per a les pròximes hores.</td></tr>';
+          actualitzarHoresDisponibles();
           return;
         }
-        d.cites.forEach(function(c){
+        
+        CITES_EXISTENTS.forEach(function(c){
           var tr = document.createElement('tr');
           var badgeEstat = '<span style="background:var(--success-bg); color:var(--success); padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; letter-spacing:0.02em;">' + c.estat.toUpperCase() + '</span>';
           
@@ -303,41 +364,116 @@
                      + '<td>' + badgeEstat + '</td>';
           tb.appendChild(tr);
         });
+
+        actualitzarHoresDisponibles();
       } catch(e) {
         document.getElementById('taula-cites').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger);">Error sincronitzant el llistat d\'agenda.</td></tr>';
       }
     }
 
-    document.getElementById('btn-crear-cita').addEventListener('click', async function(){
-      var msg = document.getElementById('msg-crear');
-      var pacient = document.getElementById('ct-pacient').value.trim();
-      var data    = document.getElementById('ct-data').value;
-      var hora    = document.getElementById('ct-hora').value;
-      var centre  = document.getElementById('ct-centre').value;
-      
-      msg.innerHTML = '';
+    function actualitzarHoresDisponibles() {
+      var centreSeleccionat = document.getElementById('ct-centre').value;
+      var dataSeleccionada = document.getElementById('ct-data').value;
+      var horaSelect = document.getElementById('ct-hora');
 
-      if (!pacient || !data || !hora || !centre) {
-        msg.style.color = 'var(--danger)';
-        msg.innerHTML = iconAlert + ' Falta emplenar camps requerits.';
+      if (!centreSeleccionat || !dataSeleccionada) {
+        horaSelect.innerHTML = '<option value="">Selecciona primer centre i data...</option>';
         return;
       }
+
+      // Filtrar el torn validant el dia exacte de la setmana triat per l'usuari
+      var tornActiu = obtenirTornDiaI_Centre(centreSeleccionat, dataSeleccionada);
+      if (!tornActiu) {
+        horaSelect.innerHTML = '<option value="">— Sense hores (Metge sense torn aquest dia) —</option>';
+        return;
+      }
+
+      function aMinuts(tStr) { var p = tStr.split(':'); return parseInt(p[0], 10) * 60 + parseInt(p[1], 10); }
+      function aText(mins) { var h = Math.floor(mins / 60); var m = mins % 60; return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
+
+      var minInici = aMinuts(tornActiu.hora_inici);
+      var minFi = aMinuts(tornActiu.hora_fi);
+      
+      var optionsHtml = '<option value="">— Selecciona un interval lliure —</option>';
+
+      for (var m = minInici; m < minFi; m += 20) {
+        var slotHora = aText(m);
+
+        // Control de col·lisions: mateix dia, mateixa hora, mateixa consulta
+        var intervalOcupat = CITES_EXISTENTS.some(function(c) {
+          return c.data === dataSeleccionada && 
+                 c.hora === slotHora && 
+                 (c.codi_sala === tornActiu.codi_sala || c.nom_centre === tornActiu.nom_centre);
+        });
+
+        if (intervalOcupat) {
+          optionsHtml += '<option value="' + slotHora + '" disabled>' + slotHora + ' (Ocupat — Sala de Consulta Reservada)</option>';
+        } else {
+          optionsHtml += '<option value="' + slotHora + '">' + slotHora + '</option>';
+        }
+      }
+
+      horaSelect.innerHTML = optionsHtml;
+    }
+
+    document.getElementById('btn-crear-cita').addEventListener('click', async function(){
+      var msg = document.getElementById('msg-crear');
+      msg.innerHTML = '';
+
+      var inputPacient = document.getElementById('ct-pacient');
+      var inputCentre  = document.getElementById('ct-centre');
+      var inputData    = document.getElementById('ct-data');
+      var inputHora    = document.getElementById('ct-hora');
+
+      [inputPacient, inputCentre, inputData, inputHora].forEach(function(el) {
+        el.classList.remove('is-invalid');
+      });
+
+      var pacient = inputPacient.value.trim();
+      var centre  = inputCentre.value;
+      var data    = inputData.value;
+      var hora    = inputHora.value;
+
+      var hiHaErrors = false;
+
+      if (!pacient) { inputPacient.classList.add('is-invalid'); hiHaErrors = true; }
+      if (!centre)  { inputCentre.classList.add('is-invalid');  hiHaErrors = true; }
+      if (!data)    { inputData.classList.add('is-invalid');    hiHaErrors = true; }
+      if (!hora)    { inputHora.classList.add('is-invalid');    hiHaErrors = true; }
+
+      if (hiHaErrors) {
+        msg.style.color = 'var(--danger)';
+        msg.innerHTML = iconAlert + ' Falta emplenar els camps obligatoris marcats en vermell.';
+        return;
+      }
+
+      var tornTrobat = obtenirTornDiaI_Centre(centre, data);
+      if (!tornTrobat) {
+        msg.style.color = 'var(--danger)';
+        msg.innerHTML = iconX + ' No es pot assignar: No tens cap torn vàlid configurat per a aquest dia.';
+        return;
+      }
+
       try {
         var r = await fetch(API + '/cites/', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            dni_pacient: pacient, dni_metge: usuari.dni,
-            data: data, hora: hora,
-            codi_centre: centre, codi_sala: (TORNS_METGE.find(function(t){return t.codi_centre===centre;})||{}).codi_sala||''
+            dni_pacient: pacient, 
+            dni_metge: usuari.dni,
+            data: data, 
+            hora: hora,
+            codi_centre: centre, 
+            codi_sala: tornTrobat.codi_sala || ''
           })
         });
         var d = await r.json();
         if (statusOk(d.status)) {
           msg.style.color = 'var(--success)';
           msg.innerHTML = iconCheck + ' ' + d.missatge;
-          document.getElementById('ct-pacient').value = '';
-          carregarCitesProximes();
+          
+          inputPacient.value = '';
+          await carregarCitesProximes();
         } else { 
           msg.style.color = 'var(--danger)'; 
           msg.innerHTML = iconX + ' ' + d.missatge; 
@@ -348,7 +484,11 @@
       }
     });
 
-    window.onload = function() { carregarTorns(); carregarCitesProximes(); };
+    window.onload = async function() { 
+      fixarDataAvui();
+      await carregarTorns(); 
+      await carregarCitesProximes(); 
+    };
   </script>
 </body>
 </html>
