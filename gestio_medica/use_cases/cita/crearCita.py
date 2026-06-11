@@ -12,6 +12,10 @@ def crearCita(codi_cita, data, hora, estat, dni_metge, dni_pacient, codi_centre,
         raise ValueError(f"Error: El metge amb DNI {dni_metge} no existeix en la BBDD.")
     
     metge_instancia = Metge.objects.get(dni=dni_metge)
+
+    # Un metge no pot crear una cita per a si mateix com a pacient
+    if dni_pacient == dni_metge:
+        raise ValueError("Error: Un metge no es pot assignar una cita a si mateix com a pacient.")
     
     ncita = Cita.objects.create(
         codi_cita=codi_cita,

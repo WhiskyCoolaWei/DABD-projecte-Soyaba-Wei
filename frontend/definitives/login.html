@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthLog – Iniciar Sessió</title>
+  <link rel="stylesheet" href="global.css">
+</head>
+<body>
+
+  <div class="auth-bg-gradient">
+    <div class="auth-card-premium">
+      
+      <div class="brand-wrapper">
+        <div class="brand-logo-icon">🏥</div>
+        <div class="brand-title">HealthLog</div>
+        <div class="brand-subtitle">Plataforma Clínico-Hospitalària Integrada</div>
+      </div>
+      
+      <div id="alert-box" class="alert-error-box">
+        <span>⚠️</span>
+        <span id="missatge-text"></span>
+      </div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Correu Electrònic</label>
+          <input type="email" id="email" class="form-control" required placeholder="nom@hospital.com" autocomplete="email">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: var(--spacing-xl);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+            <label class="form-label" style="margin-bottom: 0;">Contrasenya</label>
+          </div>
+          <input type="password" id="contrasenya" class="form-control" required placeholder="••••••••" autocomplete="current-password">
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-login-pulse">Entrar al Sistema</button>
+      </form>
+      
+      <div style="text-align: center; margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid var(--gray-200);">
+        <p style="font-size: 0.875rem; color: var(--gray-500);">
+          Nou a la plataforma de salut? <a href="registreUsuari.html" style="color: var(--brand-600); text-decoration: none; font-weight: 600;">Sol·licitar registre</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:8000';
+    
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertBox = document.getElementById('alert-box');
+      const errorText = document.getElementById('missatge-text');
+      
+      // Ocultamos la alerta previa cada vez que se intenta re-enviar
+      alertBox.style.display = 'none';
+
+      try {
+        const res = await fetch(API + '/login/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            email:       document.getElementById('email').value,
+            contrasenya: document.getElementById('contrasenya').value
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === 'èxit') {
+          localStorage.setItem('usuari',      JSON.stringify(data));
+          localStorage.setItem('pacient_dni', data.dni);
+          localStorage.setItem('pacient_nom', data.nom);
+
+          if (data.rols.includes('metge')) {
+            window.location.href = 'dashboard.html';
+          } else {
+            window.location.href = 'dashboardPacient.html';
+          }
+        } else {
+          errorText.textContent = data.missatge;
+          alertBox.style.display = 'flex';
+        }
+      } catch (err) {
+        errorText.textContent = 'Error de connexió amb el servidor de l\'hospital.';
+        alertBox.style.display = 'flex';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -163,3 +163,171 @@ class HistorialClinic(models.Model):
     class Meta:
         managed = False
         db_table = 'historialclinic'
+
+class Usuari(models.Model):
+    codi_usuari = models.CharField(max_length=15, primary_key=True)
+    email       = models.CharField(max_length=100, unique=True)
+    contrasenya = models.CharField(max_length=255)
+    dni         = models.OneToOneField(
+                    Persona,
+                    on_delete=models.CASCADE,
+                    db_column='dni',
+                    related_name='usuari')
+
+    class Meta:
+        managed  = False
+        db_table = 'usuari'
+
+    def __str__(self):
+        return self.email
+
+
+class Malaltia(models.Model):
+    codi_cie   = models.CharField(max_length=10, primary_key=True)
+    nom        = models.CharField(max_length=150, unique=True)
+    descripcio = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed  = False
+        db_table = 'malaltia'
+
+    def __str__(self):
+        return f"{self.codi_cie} - {self.nom}"
+
+
+class DiagnosticMalaltia(models.Model):
+    diagnostic = models.ForeignKey(
+                    Diagnostic,
+                    on_delete=models.CASCADE,
+                    db_column='codi_diagnostic',
+                    related_name='malalties')
+    malaltia   = models.ForeignKey(
+                    Malaltia,
+                    on_delete=models.CASCADE,
+                    db_column='codi_cie',
+                    related_name='diagnostics')
+
+    class Meta:
+        managed      = False
+        db_table     = 'diagnosticmalaltia'
+        unique_together = [('diagnostic', 'malaltia')]
+
+class Supervisio(models.Model):
+    dni_supervisor = models.ForeignKey(
+                        Metge,
+                        on_delete=models.CASCADE,
+                        db_column='supervisor_dni',
+                        related_name='supervisats',
+                        primary_key=True)
+    dni_supervisat = models.ForeignKey(
+                        Metge,
+                        on_delete=models.CASCADE,
+                        db_column='supervisat_dni',
+                        related_name='supervisors')
+
+    class Meta:
+        managed      = False
+        db_table     = 'supervisio'
+        unique_together = [('dni_supervisor', 'dni_supervisat')]
+
+
+class CentreMedic(models.Model):
+    codi_centre = models.CharField(max_length=15, primary_key=True)
+    nom         = models.CharField(max_length=150)
+    carrer      = models.CharField(max_length=200, blank=True, null=True)
+    codi_postal = models.CharField(max_length=10,  blank=True, null=True)
+    ciutat      = models.CharField(max_length=100, blank=True, null=True)
+    telefon     = models.CharField(max_length=20,  blank=True, null=True)
+
+    class Meta:
+        managed  = False
+        db_table = 'centremedic'
+
+    def __str__(self):
+        return self.nom
+
+
+class Torn(models.Model):
+    codi_torn   = models.CharField(max_length=15, primary_key=True)
+    dia_setmana = models.CharField(max_length=20)
+    hora_inici  = models.TimeField()
+    hora_fi     = models.TimeField()
+    data_inici  = models.DateField()
+    data_fi     = models.DateField()
+    dni_metge   = models.ForeignKey(
+                    'Metge', on_delete=models.CASCADE, db_column='dni_metge')
+    codi_centre = models.ForeignKey(
+                    'CentreMedic', on_delete=models.CASCADE, db_column='codi_centre')
+
+    class Meta:
+        managed  = False
+        db_table = 'torn'
+
+    def __str__(self):
+        dies = {1:'Dl',2:'Dm',3:'Dc',4:'Dj',5:'Dv',6:'Ds',7:'Dg'}
+        return f"{dies.get(self.dia_setmana,'?')} {self.hora_inici}-{self.hora_fi}"
+
+
+class Farmacia(models.Model):
+    # 1:1 amb CentreMedic — la PK és el mateix codi_centre
+    codi_centre = models.OneToOneField(
+        CentreMedic,
+        on_delete=models.CASCADE,
+        db_column='codi_centre',
+        primary_key=True,
+        related_name='farmacia'
+    )
+
+    class Meta:
+        managed  = False
+        db_table = 'farmacia'
+
+    def __str__(self):
+        return f"Farmàcia {self.codi_centre_id}"
+
+
+class EstocMedicament(models.Model):
+    # Classe associativa Farmàcia ↔ Medicament
+    codi_centre = models.ForeignKey(
+        Farmacia,
+        on_delete=models.CASCADE,
+        db_column='codi_centre',
+        related_name='estoc',
+        primary_key=True
+    )
+    codi_nacional = models.ForeignKey(
+        Medicament,
+        on_delete=models.RESTRICT,
+        db_column='codi_nacional',
+        related_name='estoc'
+    )
+    quantitat_disponible = models.IntegerField(default=0)
+
+    class Meta:
+        managed         = False
+        db_table        = 'estocmedicament'
+        unique_together = [('codi_centre', 'codi_nacional')]
+
+
+class Dispensacio(models.Model):
+    # Lliurament d'un medicament a un pacient per una prescripció activa
+    codi_dispensacio     = models.CharField(max_length=15, primary_key=True)
+    data_lliurament      = models.DateField()
+    quantitat_dispensada = models.IntegerField()
+    # FK a Farmacia
+    codi_centre          = models.ForeignKey(
+        Farmacia,
+        on_delete=models.RESTRICT,
+        db_column='codi_centre',
+        related_name='dispensacions'
+    )
+    # FK composta a Prescripcio (PK natural) — usem CharField com fa Wei
+    codi_tractament = models.CharField(max_length=15)
+    codi_nacional   = models.CharField(max_length=15)
+
+    class Meta:
+        managed  = False
+        db_table = 'dispensacio'
+
+    def __str__(self):
+        return self.codi_dispensacio

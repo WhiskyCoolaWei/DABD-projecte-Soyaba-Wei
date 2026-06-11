@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthLog – Malalties</title>
+</head>
+<body>
+  <h1>HealthLog – Catàleg de malalties (CIE-10)</h1>
+
+  <h2>Cercar malalties</h2>
+  <input type="text" id="cerca" placeholder="Nom o codi CIE...">
+  <button onclick="llistar()">Cercar</button>
+  <ul id="llista"></ul>
+
+  <hr>
+  <h2>Crear malaltia nova</h2>
+  <form id="crearForm">
+    <label>Codi CIE:<br><input type="text" id="codi_cie" required></label><br><br>
+    <label>Nom:<br><input type="text" id="nom" required></label><br><br>
+    <label>Descripció:<br><textarea id="descripcio"></textarea></label><br><br>
+    <button type="submit">Crear</button>
+  </form>
+  <p id="msgCrear"></p>
+
+  <hr>
+  <h2>Associar malaltia a diagnòstic (relació N:M)</h2>
+  <form id="associarForm">
+    <label>Codi diagnòstic:<br><input type="text" id="codi_diag" required></label><br><br>
+    <label>Codi CIE malaltia:<br><input type="text" id="codi_cie_assoc" required></label><br><br>
+    <button type="submit">Associar</button>
+  </form>
+  <p id="msgAssociar"></p>
+
+  <h3>Malalties d'un diagnòstic</h3>
+  <input type="text" id="codi_diag_consulta" placeholder="Codi diagnòstic...">
+  <button onclick="veureMalalties()">Veure</button>
+  <ul id="llistaDiag"></ul>
+
+  <script>
+    const API = 'http://localhost:8000';
+
+    async function llistar() {
+      const cerca = document.getElementById('cerca').value;
+      const res   = await fetch(`${API}/malalties/?cerca=${cerca}`);
+      const data  = await res.json();
+      document.getElementById('llista').innerHTML =
+        data.malalties.map(m =>
+          `<li><strong>${m.codi_cie}</strong> – ${m.nom}</li>`
+        ).join('');
+    }
+
+    document.getElementById('crearForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(`${API}/malalties/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          codi_cie:   document.getElementById('codi_cie').value,
+          nom:        document.getElementById('nom').value,
+          descripcio: document.getElementById('descripcio').value
+        })
+      });
+      const data = await res.json();
+      const msg  = document.getElementById('msgCrear');
+      msg.style.color = data.status === 'èxit' ? 'green' : 'red';
+      msg.textContent = data.missatge;
+      if (data.status === 'èxit') llistar();
+    });
+
+    document.getElementById('associarForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const codiDiag = document.getElementById('codi_diag').value;
+      const res = await fetch(`${API}/diagnostics/${codiDiag}/malalties/`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({codi_cie: document.getElementById('codi_cie_assoc').value})
+      });
+      const data = await res.json();
+      const msg  = document.getElementById('msgAssociar');
+      msg.style.color = data.status === 'èxit' ? 'green' : 'red';
+      msg.textContent = data.missatge;
+    });
+
+    async function veureMalalties() {
+      const codiDiag = document.getElementById('codi_diag_consulta').value;
+      const res  = await fetch(`${API}/diagnostics/${codiDiag}/malalties/`);
+      const data = await res.json();
+      document.getElementById('llistaDiag').innerHTML =
+        data.malalties.map(m =>
+          `<li><strong>${m.codi_cie}</strong> – ${m.nom}</li>`
+        ).join('');
+    }
+
+    llistar();
+  </script>
+</body>
+</html>

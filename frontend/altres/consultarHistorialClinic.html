@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial Clínic del Pacient</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 30px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .container { width: 100%; max-width: 900px; }
+        
+        /* Buscador */
+        .search-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; gap: 15px; margin-bottom: 25px; align-items: center; }
+        .search-card input { flex: 1; padding: 12px; border: 1px solid #dcdfe6; border-radius: 8px; font-size: 15px; text-transform: uppercase; }
+        .search-card input:focus { border-color: #3498db; outline: none; }
+        .btn-search { padding: 12px 25px; background-color: #3498db; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-search:hover { background-color: #2980b9; }
+
+        /* Contenedor Principal de la Ficha (Oculto al inicio) */
+        .main-profile { display: none; }
+
+        /* Ficha de Datos Generales */
+        .info-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid #2ecc71; }
+        .info-card h2 { margin-top: 0; color: #2c3e50; font-size: 24px; border-bottom: 2px solid #f2f4f7; padding-bottom: 10px; }
+        .grid-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 15px; }
+        .info-item { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #bdc3c7; }
+        .info-item.danger { border-left-color: #e74c3c; background: #fdf2f2; }
+        .info-item.warning { border-left-color: #f39c12; background: #fef9e7; }
+        .info-item label { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .info-item span { font-size: 16px; color: #2c3e50; font-weight: 600; }
+
+        /* Sección del Timeline (Línea de tiempo médica) */
+        .timeline-title { color: #2c3e50; font-size: 20px; margin-top: 40px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .timeline { position: relative; padding-left: 30px; border-left: 3px solid #3498db; margin-left: 15px; }
+        
+        .timeline-item { position: relative; margin-bottom: 30px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); }
+        /* El puntito de la línea de tiempo */
+        .timeline-item::before { content: ''; position: absolute; width: 14px; height: 14px; background-color: #3498db; border: 3px solid white; border-radius: 50%; left: -41px; top: 22px; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3); }
+        
+        .timeline-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #edf2f7; padding-bottom: 10px; margin-bottom: 15px; }
+        .timeline-date { font-weight: bold; color: #3498db; font-size: 15px; }
+        .timeline-doctor { font-size: 13px; color: #7f8c8d; background: #e8f4f8; padding: 4px 10px; border-radius: 20px; }
+
+        /* Bloque de Diagnósticos */
+        .diag-block { background: #fdfefe; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .diag-title { color: #c0392b; font-weight: bold; margin: 0 0 5px 0; font-size: 15px; }
+        .diag-desc { color: #34495e; margin: 0 0 10px 0; font-size: 14px; }
+        .diag-notes { font-size: 13px; color: #7f8c8d; font-style: italic; background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
+
+        /* Bloque de Tratamientos (Anidados en el diagnóstico) */
+        .trac-block { background: #f0fbf2; border-left: 3px solid #2ecc71; padding: 12px; border-radius: 4px; margin-top: 10px; margin-left: 15px; }
+        .trac-title { color: #27ae60; font-weight: bold; margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; }
+        .trac-dates { font-size: 12px; color: #7f8c8d; margin-bottom: 5px; }
+
+        .no-data { text-align: center; color: #95a5a6; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="search-card">
+        <input type="text" id="input_dni" placeholder="DNI del pacient (Obligatori)">
+        <input type="text" id="input_dni_metge" placeholder="Filtrar per DNI de Metge (Opcional)" style="flex: 0.8;">
+        <button class="btn-search" id="btnCercar">Consultar Historial</button>
+    </div>
+
+    <div id="estat_inicial" class="no-data">
+        <h3>Cap historial seleccionat</h3>
+        <p>Introdueix un DNI vàlid de pacient per extreure la fitxa clínica completa del pacient.</p>
+    </div>
+
+    <div id="perfil_clinic" class="main-profile">
+        
+        <div class="info-card">
+            <h2 id="lbl_nom_pacient">Nom del Pacient</h2>
+            <div class="grid-info">
+                <div class="info-item">
+                    <label>Codi Historial</label>
+                    <span id="lbl_codi_historial">-</span>
+                </div>
+                <div class="info-item warning">
+                    <label>Grup Sanguini</label>
+                    <span id="lbl_grup_sanguini">-</span>
+                </div>
+                <div class="info-item danger">
+                    <label>Al·lèrgies Registrades</label>
+                    <span id="lbl_allergies">-</span>
+                </div>
+                <div class="info-item">
+                    <label>Malalties Cròniques</label>
+                    <span id="lbl_croniques">-</span>
+                </div>
+                <div class="info-item full-width" style="grid-column: span 2;">
+                    <label>Antecedents Familiars / Personals</label>
+                    <span id="lbl_antecedents">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-title">📁 Activitat Mèdica i Cronologia de Cites</div>
+        <div class="timeline" id="timeline_cites">
+            </div>
+        
+    </div>
+</div>
+
+<script>
+document.getElementById('btnCercar').addEventListener('click', async () => {
+    const dni = document.getElementById('input_dni').value.trim();
+    const dniMetge = document.getElementById('input_dni_metge').value.trim();
+    const estatInicial = document.getElementById('estat_inicial');
+    const perfilClinic = document.getElementById('perfil_clinic');
+    const timelineCites = document.getElementById('timeline_cites');
+
+    if (!dni) {
+        alert("Si us plau, escriu un DNI de pacient per fer la cerca.");
+        return;
+    }
+
+    try {
+        // Construïm la URL afegint el filtre del metge només si l'usuari l'ha informat
+        let url = `http://127.0.0.1:8000/historial/?dni=${dni}`;
+        if (dniMetge) {
+            url += `&dni_metge=${dniMetge}`;
+        }
+
+        const resposta = await fetch(url);
+        const dada = await resposta.json();
+
+        if (resposta.status === 200) {
+            // 1. Mostrar contenidor principal i amagar el missatge inicial
+            estatInicial.style.display = 'none';
+            perfilClinic.style.display = 'block';
+
+            // 2. Mapejar dades generals del bloc superior (Historial)
+            document.getElementById('lbl_nom_pacient').textContent = dada.historial.nom_pacient;
+            document.getElementById('lbl_codi_historial').textContent = dada.historial.codi_historial;
+            document.getElementById('lbl_grup_sanguini').textContent = dada.historial.grup_sanguini;
+            document.getElementById('lbl_allergies').textContent = dada.historial.allergies;
+            document.getElementById('lbl_croniques').textContent = dada.historial.malalties_croniques;
+            document.getElementById('lbl_antecedents').textContent = dada.historial.antecedents;
+
+            // 3. Renderitzar el Timeline de cites de forma anidada (Cita -> Diagnòstics -> Tractaments)
+            timelineCites.innerHTML = ''; 
+
+            if (dada.historial_clinic_complet.length === 0) {
+                timelineCites.innerHTML = '<p style="color:#7f8c8d; font-style:italic; text-align:center; padding:20px;">No s\'ha trobat cap cita que coincideixi amb els criteris de cerca de filtrat.</p>';
+                return;
+            }
+
+            dada.historial_clinic_complet.forEach(cita => {
+                const itemCita = document.createElement('div');
+                itemCita.className = 'timeline-item';
+
+                let htmlContingut = `
+                    <div class="timeline-header">
+                        <span class="timeline-date">📅 Cita: ${cita.data} a les ${cita.hora} (${cita.estat.toUpperCase()})</span>
+                        <span class="timeline-doctor">👨‍⚕️ Metge: ${cita.dni_metge}</span>
+                    </div>
+                `;
+
+                // Iterem els diagnòstics vinculats a la cita actual
+                if (cita.diagnostics.length > 0) {
+                    cita.diagnostics.forEach(diag => {
+                        htmlContingut += `
+                            <div class="diag-block">
+                                <p class="diag-title">🚨 Diagnòstic (${diag.codi_diagnostic}):</p>
+                                <p class="diag-desc">${diag.descripcio}</p>
+                                ${diag.notes_cliniques ? `<div class="diag-notes"><b>Notes clíniques:</b> ${diag.notes_cliniques}</div>` : ''}
+                        `;
+
+                        // Iterem els tractaments vinculats al diagnòstic actual
+                        if (diag.tractaments.length > 0) {
+                            diag.tractaments.forEach(trac => {
+                                htmlContingut += `
+                                    <div class="trac-block">
+                                        <p class="trac-title">💊 Tractament Actiu (${trac.codi_tractament})</p>
+                                        <div class="trac-dates">⏱️ Del ${trac.data_inici} al ${trac.data_fi_prevista}</div>
+                                        <div style="font-size: 13px; color:#27ae60;"><b>Indicacions:</b> ${trac.indicacions}</div>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            htmlContingut += `<p style="font-size:12px; color:#95a5a6; margin-left:15px; font-style:italic;">Sense tractaments prescrits per aquest diagnòstic.</p>`;
+                        }
+                        htmlContingut += `</div>`; // Tancament diag-block
+                    });
+                } else {
+                    htmlContingut += `<p style="font-size:13px; color:#95a5a6; font-style:italic; margin:0;">Cita realitzada sense diagnòstics ni incidències registrades.</p>`;
+                }
+
+                itemCita.innerHTML = htmlContingut;
+                timelineCites.appendChild(itemCita);
+            });
+
+        } else {
+            perfilClinic.style.display = 'none';
+            estatInicial.style.display = 'block';
+            alert("❌ " + dada.missatge);
+        }
+    } catch (err) {
+        alert("❌ Error crític de connexió amb el servidor.");
+    }
+});
+</script>
+</body>
+</html>

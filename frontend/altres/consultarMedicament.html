@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultar Medicaments</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; padding: 40px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 95%; max-width: 1000px; }
+        h2 { color: #2c3e50; text-align: center; margin-top: 0; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px; }
+        
+        /* Filtres de Cerca */
+        .filter-box { display: flex; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: flex-end; border: 1px solid #e4e7ed; }
+        .input-group { display: flex; flex-direction: column; flex: 1; }
+        label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+        input { padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; }
+        input:focus { border-color: #3498db; outline: none; }
+        
+        .btn-search { padding: 11px 20px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-search:hover { background-color: #2980b9; }
+        .btn-clear { padding: 11px 20px; background-color: #95a5a6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-clear:hover { background-color: #7f8c8d; }
+
+        /* Taula de Dades */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background-color: #f8f9fa; color: #2c3e50; font-weight: 600; }
+        tr:hover { background-color: #fdfdfe; }
+        .badge-codi { background-color: #e8f4f8; color: #3498db; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📚 Consulta del Catàleg de Medicaments</h2>
+    
+    <div class="filter-box">
+        <div class="input-group">
+            <label>Filtrar per Nom Comercial</label>
+            <input type="text" id="f_nom" placeholder="Ex: Paracetamol...">
+        </div>
+        <div class="input-group">
+            <label>Filtrar per Principi Actiu</label>
+            <input type="text" id="f_actiu" placeholder="Ex: Ibuprofè...">
+        </div>
+        <button class="btn-search" id="btnFiltrar">Cercar</button>
+        <button class="btn-clear" id="btnNetejar">Netejar Filtres</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Codi Nacional</th>
+                <th>Nom Comercial</th>
+                <th>Principi Actiu</th>
+            </tr>
+        </thead>
+        <tbody id="taula_medicaments">
+            </tbody>
+    </table>
+</div>
+
+<script>
+// --- FUNCIÓ PRINCIPAL PER OPTENIR I FILTRAR MEDICAMENTS (GET) ---
+async function carregarMedicaments() {
+    const tbody = document.getElementById('taula_medicaments');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cercant medicaments...</td></tr>';
+    
+    const nom = document.getElementById('f_nom').value.trim();
+    const actiu = document.getElementById('f_actiu').value.trim();
+    
+    try {
+        // Construcció dinàmica dels Query Params per a la URL
+        const params = new URLSearchParams();
+        if (nom) params.append('nom_comercial', nom);
+        if (actiu) params.append('principi_actiu', actiu);
+
+        const resposta = await fetch(`http://127.0.0.1:8000/medicaments/?${params.toString()}`);
+        const dada = await resposta.json();
+        
+        tbody.innerHTML = '';
+
+        if (dada.status === "èxit" && dada.medicaments.length > 0) {
+            dada.medicaments.forEach(m => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><span class="badge-codi">${m.codi_nacional}</span></td>
+                    <td><strong>${m.nom_comercial}</strong></td>
+                    <td>${m.principi_actiu}</td>
+                `;
+                tbody.appendChild(fila);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#95a5a6;">No s\'ha trobat cap medicament amb els criteris introduïts.</td></tr>';
+        }
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#e74c3c;">❌ Error de connexió amb el servidor de l\'hospital.</td></tr>';
+    }
+}
+
+// --- GESTIÓ D'ESDEVENIMENTS ---
+document.getElementById('btnFiltrar').addEventListener('click', carregarMedicaments);
+
+document.getElementById('btnNetejar').addEventListener('click', () => {
+    document.getElementById('f_nom').value = '';
+    document.getElementById('f_actiu').value = '';
+    carregarMedicaments();
+});
+
+// Càrrega automàtica de tot el catàleg en obrir la pantalla
+window.onload = carregarMedicaments;
+</script>
+</body>
+</html>

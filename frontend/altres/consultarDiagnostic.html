@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Diagnòstic</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 450px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .search-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        input { flex: 1; padding: 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 15px; }
+        input:focus { border-color: #9b59b6; outline: none; }
+        button { padding: 12px 20px; background-color: #9b59b6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #8e44ad; }
+        .result-box { display: none; background: #fafafa; border: 1px solid #e4e7ed; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .result-box p { margin: 10px 0; font-size: 15px; color: #555; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .result-box strong { color: #2c3e50; float: right; }
+        .desc-block { background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-top: 5px; font-style: italic; color: #666; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Consultar Fitxa Diagnòstic</h2>
+    
+    <div class="search-group">
+        <input type="text" id="cerca_codi" placeholder="Introdueix el codi del diagnòstic">
+        <button type="button" id="btnCercar">Cercar</button>
+    </div>
+
+    <div class="result-box" id="resultats">
+        <p>Codi Diagnòstic: <strong id="res_codi">-</strong></p>
+        <p>Codi Cita Associada: <strong id="res_cita">-</strong></p>
+        <p style="border-bottom: none; margin-bottom: 0;">Descripció Clínica:</p>
+        <div id="res_desc" class="desc-block">-</div>
+    </div>
+</div>
+
+<script>
+document.getElementById('btnCercar').addEventListener('click', async () => {
+    const codi = document.getElementById('cerca_codi').value.trim();
+    const resBox = document.getElementById('resultats');
+    
+    if (!codi) {
+        alert("Si us plau, introdueix un codi de diagnòstic.");
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`http://127.0.0.1:8000/diagnostics/?codi_diagnostic=${codi}`);
+        const data = await resposta.json();
+
+        if (resposta.status === 200) {
+            // Mapejat exacte de les claus del teu controlador JSON
+            document.getElementById('res_codi').textContent = data.diagnostic.codi_diagnostic;
+            document.getElementById('res_cita').textContent = data.diagnostic.codi_cita;
+            document.getElementById('res_desc').textContent = data.diagnostic.descripcio;
+            
+            resBox.style.display = 'block';
+        } else {
+            resBox.style.display = 'none';
+            alert("❌ " + data.missatge);
+        }
+    } catch (err) {
+        alert("❌ Error de connexió amb el servidor.");
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Prescripcions</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 450px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .search-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        input { flex: 1; padding: 12px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 15px; }
+        input:focus { border-color: #3498db; outline: none; }
+        button { padding: 12px 20px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .result-box { display: none; background: #fafafa; border: 1px solid #e4e7ed; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .result-box p { margin: 10px 0; font-size: 15px; color: #555; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .result-box strong { color: #2c3e50; float: right; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; font-weight: bold; }
+        .badge-activa { background-color: #2ecc71; }
+        .badge-finalitzada { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Consultar Fitxa Prescripció</h2>
+    
+    <div class="search-group">
+        <input type="text" id="cerca_codi" placeholder="Introdueix codi (Ex: PRE12345678)">
+        <button type="button" id="btnCercar">Cercar</button>
+    </div>
+
+    <div class="result-box" id="resultats">
+        <p>Codi Prescripció: <strong id="res_codi">-</strong></p>
+        <p>Codi Tractament: <strong id="res_trac">-</strong></p>
+        <p>Codi Nacional: <strong id="res_nac">-</strong></p>
+        <p>Dosis: <strong id="res_dosi">-</strong></p>
+        <p>Freqüència: <strong id="res_freq">-</strong></p>
+        <p>Durada: <strong id="res_durada">-</strong></p>
+        <p>Estat: <span id="res_estat" class="badge">-</span></p>
+    </div>
+</div>
+
+<script>
+document.getElementById('btnCercar').addEventListener('click', async () => {
+    const codi = document.getElementById('cerca_codi').value.trim();
+    const resBox = document.getElementById('resultats');
+    
+    if (!codi) {
+        alert("Si us plau, introdueix un codi de prescripció.");
+        return;
+    }
+
+    try {
+        // Enllaça correctament amb el paràmetre 'codi_individual' heretat del controlador separat
+        const resposta = await fetch(`http://127.0.0.1:8000/prescripcions/?codi_individual=${codi}`);
+        const data = await resposta.json();
+
+        if (resposta.status === 200) {
+            document.getElementById('res_codi').textContent = data.prescripcio.codi_prescripcio;
+            document.getElementById('res_trac').textContent = data.prescripcio.codi_tractament;
+            document.getElementById('res_nac').textContent = data.prescripcio.codi_nacional;
+            document.getElementById('res_dosi').textContent = data.prescripcio.dosi;
+            document.getElementById('res_freq').textContent = data.prescripcio.frequencia;
+            document.getElementById('res_durada').textContent = data.prescripcio.durada;
+            
+            const estatSpan = document.getElementById('res_estat');
+            estatSpan.textContent = data.prescripcio.estat.toUpperCase();
+            
+            if (data.prescripcio.estat === 'activa') {
+                estatSpan.className = 'badge badge-activa';
+            } else {
+                estatSpan.className = 'badge badge-finalitzada';
+            }
+            estatSpan.style.float = 'right';
+            
+            resBox.style.display = 'block';
+        } else {
+            resBox.style.display = 'none';
+            alert("❌ Error: " + data.missatge);
+        }
+    } catch (err) {
+        alert("Error de connexió amb el servidor.");
+    }
+});
+</script>
+</body>
+</html>

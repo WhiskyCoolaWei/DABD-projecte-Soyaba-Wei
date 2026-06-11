@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthLog - Gestió d'Agenda Mèdica</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    /* ========== MAQUETACIÓ ESPECÍFICA I ICONOGRAFIA ========== */
+    
+    /* Control de los iconos SVG */
+    .icon {
+      width: 1.25em;
+      height: 1.25em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-flex;
+      vertical-align: text-bottom;
+      flex-shrink: 0;
+    }
+    .icon-sm { width: 1em; height: 1em; }
+    .icon-lg { width: 1.5em; height: 1.5em; }
+
+    /* Contenidor superior (Navbar de control del Metge) */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: var(--spacing-xl);
+    }
+    
+    .doctor-profile-box {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      background: var(--brand-50);
+      padding: 6px var(--spacing-md);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: var(--spacing-xl);
+      padding: 0 var(--spacing-xl) var(--spacing-xl) var(--spacing-xl);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .menu-card-blue {
+      background: linear-gradient(145deg, var(--brand-50) 0%, #ffffff 100%);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .menu-card-blue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.1);
+    }
+
+    .menu-card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--brand-600);
+      font-weight: 700;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .menu-card-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      color: var(--gray-700);
+      text-decoration: none;
+      font-weight: 600;
+      padding: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .menu-card-link.active {
+      background: var(--brand-600);
+      color: #ffffff;
+    }
+
+    .menu-card-link:not(.active):hover {
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--brand-700);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-header">
+    <div style="font-size: 1.4rem; font-weight: 800; color: var(--gray-900); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px;">
+      <svg class="icon icon-lg" style="color: var(--brand-600);" viewBox="0 0 24 24">
+        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+      </svg>
+      HealthLog
+    </div>
+    
+    <div class="doctor-profile-box">
+      <div style="text-align: right;">
+        <div id="nom-metge" style="font-weight: 700; color: var(--brand-900); font-size: 0.95rem;">Dr/a. -</div>
+        <div style="font-size: 0.75rem; color: var(--brand-600); font-weight: 500;">Personal Facultatiu</div>
+      </div>
+      <button class="btn btn-secondary" style="padding: var(--spacing-xs) var(--spacing-sm); font-size: 0.8rem; font-weight: 700;" onclick="localStorage.clear(); window.location.href='login.html';">
+        <svg class="icon icon-sm" style="margin-right: 4px;" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Tancar Sessió
+      </button>
+    </div>
+  </header>
+
+  <div class="dashboard-grid">
+    
+    <nav>
+      <div class="menu-card-blue">
+        <div class="menu-card-title">Navegació Principal</div>
+        <a href="dashboard.html" class="menu-card-link active">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Agenda i Torns
+        </a>
+      </div>
+
+      <div class="menu-card-blue">
+        <div class="menu-card-title">Gestió Clínic-Pacient</div>
+        <a href="llistatPacients.html" class="menu-card-link">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          Els Meus Pacients
+        </a>
+      </div>
+      
+      <div class="menu-card-blue" style="background: var(--gray-50); border: 1px dashed var(--gray-300);">
+        <div class="menu-card-title" style="color: var(--gray-500); display: flex; align-items: center; gap: 4px;">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          Seguretat RGPD
+        </div>
+        <p style="font-size: 0.75rem; color: var(--gray-500); line-height: 1.4; margin: 0;">
+          Recordi tancar la sessió si s'absenta de la seva estació de treball o consulta mèdica.
+        </p>
+      </div>
+    </nav>
+
+    <main>
+      <div style="margin-bottom: var(--spacing-xl);">
+        <h1 style="margin-bottom: 2px; font-size: 1.75rem;">Gestió de l'Agenda Mèdica</h1>
+        <p style="color: var(--gray-500); font-size: 0.95rem;">Organització de torns, guàrdies i assignació de noves visites clíniques.</p>
+      </div>
+
+      <div class="card" style="margin-bottom: var(--spacing-lg); border-left: 4px solid var(--brand-600);">
+        <h3 style="margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
+          <svg class="icon" style="color: var(--brand-600);" viewBox="0 0 24 24"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+          El teu Torn d'Avui
+        </h3>
+        <div id="info-torns" style="color: var(--gray-700); font-size: 0.95rem; line-height: 1.5;">
+          Cercant assignació de centre i quadrants horaris...
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-xs);">
+          <svg class="icon" style="color: var(--brand-600);" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+          Programar Nova Cita
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+          <div class="form-group">
+            <label class="form-label">DNI Pacient</label>
+            <input type="text" id="ct-pacient" class="form-control" placeholder="Introduir DNI de la targeta sanitària">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Centre Assignat</label>
+            <select id="ct-centre" class="form-control" onchange="actualitzarVisibilitatTorn()"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de la Cita</label>
+            <input type="date" id="ct-data" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora de la Visita</label>
+            <input type="time" id="ct-hora" class="form-control">
+          </div>
+        </div>
+        
+        <div id="fila-torns" style="display: none; background-color: var(--warning-bg); border: 1px solid rgba(245,158,11,0.3); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm); margin-bottom: var(--spacing-md); font-size: 0.9rem; color: var(--warning); font-weight: 500;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Alerta del Sistema: No constes en cap quadrant de guàrdia ni torn registrat per a aquest centre escollit.
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+          <button class="btn btn-primary" id="btn-crear-cita" style="padding: var(--spacing-sm) var(--spacing-lg); font-weight: 600;">
+            Confirmar i Assignar Cita
+          </button>
+          <div id="msg-crear" style="font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 6px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-xs);">
+          <svg class="icon" style="color: var(--brand-600);" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Cites d'Avui i Properes Sol·licituds
+        </h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data / Hora</th>
+              <th>Pacient (DNI)</th>
+              <th>Centre Mèdic</th>
+              <th>Sala / Consulta</th>
+              <th>Estat de la Cita</th>
+            </tr>
+          </thead>
+          <tbody id="taula-cites">
+            </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    var API = 'http://localhost:8000';
+    var usuari = JSON.parse(localStorage.getItem('usuari'));
+    if (!usuari) { window.location.href = 'login.html'; }
+
+    document.getElementById('nom-metge').textContent = "Dr/a. " + usuari.nom;
+
+    var TORNS_METGE = [];
+
+    // Strings SVG per a injecció JavaScript
+    const iconPin = '<svg class="icon icon-sm" style="color: var(--brand-600); margin-right:4px;" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>';
+    const iconCheck = '<svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    const iconX = '<svg class="icon" viewBox="0 0 24 24"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    const iconAlert = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+
+    function statusOk(s) { return s === 'èxit' || s === 'success' || s === 'ok'; }
+
+    async function carregarTorns() {
+      try {
+        var r = await fetch(API + '/torns/?dni_metge=' + usuari.dni);
+        var d = await r.json();
+        var div = document.getElementById('info-torns');
+        var sel = document.getElementById('ct-centre');
+        sel.innerHTML = '';
+        
+        if (!d.torns || d.torns.length === 0) {
+          div.innerHTML = '<div style="color:var(--danger); font-weight:500; display:flex; align-items:center; gap:6px;">' + iconAlert + 'Sense torns actius programats en cap complex hospitalari de la xarxa.</div>';
+          return;
+        }
+        TORNS_METGE = d.torns;
+        div.innerHTML = d.torns.map(function(t){
+          return '<div style="margin-bottom: 6px; display:flex; align-items:center;">' + iconPin + ' <b>' + t.nom_centre + '</b> &nbsp;— Sala de Consulta: <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-family:inherit; font-weight:600; margin-left:4px;">' + t.codi_sala + '</code> &nbsp;(Horari: De ' + t.hora_inici + ' a ' + t.hora_fi + ')</div>';
+        }).join('');
+
+        d.torns.forEach(function(t){
+          var o = document.createElement('option');
+          o.value = t.codi_centre; o.textContent = t.nom_centre;
+          sel.appendChild(o);
+        });
+        actualitzarVisibilitatTorn();
+      } catch(e) {
+        document.getElementById('info-torns').innerHTML = '<div style="color:var(--danger); display:flex; align-items:center; gap:6px;">' + iconX + 'Error carregant dades del quadrant clínic.</div>';
+      }
+    }
+
+    function actualitzarVisibilitatTorn() {
+      var c = document.getElementById('ct-centre').value;
+      var téTorn = TORNS_METGE.some(function(t){ return t.codi_centre === c; });
+      document.getElementById('fila-torns').style.display = téTorn ? 'none' : 'block';
+    }
+
+    async function carregarCitesProximes() {
+      try {
+        var r = await fetch(API + '/cites/?dni_metge=' + usuari.dni);
+        var d = await r.json();
+        var tb = document.getElementById('taula-cites');
+        tb.innerHTML = '';
+        if (!d.cites || d.cites.length === 0) {
+          tb.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--gray-500); padding: var(--spacing-lg) 0;">No tens visites agendades per a les pròximes hores.</td></tr>';
+          return;
+        }
+        d.cites.forEach(function(c){
+          var tr = document.createElement('tr');
+          var badgeEstat = '<span style="background:var(--success-bg); color:var(--success); padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; letter-spacing:0.02em;">' + c.estat.toUpperCase() + '</span>';
+          
+          tr.innerHTML = '<td>' + c.data + ' a les ' + c.hora + '</td>'
+                     + '<td><b style="color:var(--gray-900);">' + c.dni_pacient + '</b></td>'
+                     + '<td>' + c.nom_centre + '</td>'
+                     + '<td>Consulta ' + c.codi_sala + '</td>'
+                     + '<td>' + badgeEstat + '</td>';
+          tb.appendChild(tr);
+        });
+      } catch(e) {
+        document.getElementById('taula-cites').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger);">Error sincronitzant el llistat d\'agenda.</td></tr>';
+      }
+    }
+
+    document.getElementById('btn-crear-cita').addEventListener('click', async function(){
+      var msg = document.getElementById('msg-crear');
+      var pacient = document.getElementById('ct-pacient').value.trim();
+      var data    = document.getElementById('ct-data').value;
+      var hora    = document.getElementById('ct-hora').value;
+      var centre  = document.getElementById('ct-centre').value;
+      
+      msg.innerHTML = '';
+
+      if (!pacient || !data || !hora || !centre) {
+        msg.style.color = 'var(--danger)';
+        msg.innerHTML = iconAlert + ' Falta emplenar camps requerits.';
+        return;
+      }
+      try {
+        var r = await fetch(API + '/cites/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            dni_pacient: pacient, dni_metge: usuari.dni,
+            data: data, hora: hora,
+            codi_centre: centre, codi_sala: (TORNS_METGE.find(function(t){return t.codi_centre===centre;})||{}).codi_sala||''
+          })
+        });
+        var d = await r.json();
+        if (statusOk(d.status)) {
+          msg.style.color = 'var(--success)';
+          msg.innerHTML = iconCheck + ' ' + d.missatge;
+          document.getElementById('ct-pacient').value = '';
+          carregarCitesProximes();
+        } else { 
+          msg.style.color = 'var(--danger)'; 
+          msg.innerHTML = iconX + ' ' + d.missatge; 
+        }
+      } catch(e) { 
+        msg.style.color = 'var(--danger)'; 
+        msg.innerHTML = iconX + ' Error de comunicació amb el servidor.'; 
+      }
+    });
+
+    window.onload = function() { carregarTorns(); carregarCitesProximes(); };
+  </script>
+</body>
+</html>
