@@ -303,7 +303,7 @@
       }
     }
 
-    // NOVA CORRECCIÓ CLAU: Validar si el metge té torn el dia específic triat o avui
+    // Validar si el metge té torn el dia específic triat o avui
     function obtenirTornDiaI_Centre(centreCodi, dataTriada) {
       if (!dataTriada) return null;
       
@@ -312,8 +312,6 @@
 
       return TORNS_METGE.find(function(t) {
         var coincideixCentre = t.codi_centre === centreCodi;
-        // Si el backend no té camp 'dia_setmana', es dóna per vàlid per compatibilitat de torn diari. 
-        // Si en té, es valida estrictament el dia de la setmana.
         var coincideixDia = !t.dia_setmana || (t.dia_setmana.toLowerCase() === diaSetmanaTriat);
         return coincideixCentre && coincideixDia;
       });
@@ -460,11 +458,12 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             dni_pacient: pacient, 
-            dni_metge: usuari.dni,
+            dni_metge: usuari.dni, // Clau forçada amb el DNI del metge actual
             data: data, 
             hora: hora,
             codi_centre: centre, 
-            codi_sala: tornTrobat.codi_sala || ''
+            codi_sala: tornTrobat.codi_sala || '',
+            estat: 'pendent' // Forcem estat pendent des d'origen
           })
         });
         var d = await r.json();
