@@ -378,52 +378,65 @@
     }
 
     // ── A: Carregar pacient i renderitzar llista de cites amb control de mutació ──
-    async function carregarPacient() {
-        var dni = document.getElementById('dni-pacient').value.trim().toUpperCase();
-        if (!dni) { alert('Introdueix el DNI del pacient.'); return; }
+    // ── A: Carregar pacient i renderitzar llista de cites ──
+async function carregarPacient() {
+    var dni = document.getElementById('dni-pacient').value.trim().toUpperCase();
+    if (!dni) { alert('Introdueix el DNI del pacient.'); return; }
 
-        try {
-            var r    = await fetch(API + '/historial/?dni=' + dni + '&dni_metge=' + usuari.dni);
-            var data = await r.json();
+    try {
+        var r    = await fetch(API + '/historial/?dni=' + dni + '&dni_metge=' + usuari.dni);
+        var data = await r.json();
 
-            if (data.status !== 'exit' && !data.status.includes('xit')) {
-                alert('Error: ' + (data.missatge || 'Pacient no trobat.'));
-                return;
+        if (data.status !== 'exit' && !data.status.includes('xit')) {
+            alert('Error: ' + (data.missatge || 'Pacient no trobat.'));
+            return;
+        }
+
+        var h = data.historial;
+        document.getElementById('nom-pacient').textContent = h.nom_pacient;
+        document.getElementById('info-pacient').innerHTML =
+            '<b>Grup sanguini:</b> ' + h.grup_sanguini +
+            ' &nbsp;|&nbsp; <b>Al·lèrgies:</b> ' + (h.allergies || 'Cap') +
+            ' &nbsp;|&nbsp; <b>Malalties cròniques:</b> ' + (h.malalties_croniques || 'Cap');
+
+        var cites = data.historial_clinic_complet || [];
+        var html  = '';
+        
+        // RECUPEREM LES CITES ATESES DE LA SESSIÓ DES DEL LOCALSTORAGE
+        var completes = JSON.parse(localStorage.getItem('cites_completades') || '[]');
+
+        cites.forEach(function(c) {
+            var estatNet = c.estat.toLowerCase();
+            var jaAtesa = completes.includes(c.codi_cita); // Comprovació si ja s'ha fet tot el flux
+            
+            // Si la cita ja s'ha atès del tot en el flux, li donem un fons diferent
+            var cls = 'cita-item ' + (estatNet === 'finalitzada' ? 'finalitzada' : '');
+            
+            html += '<div class="' + cls + '">';
+            html += '<span><b>' + c.codi_cita + '</b> &mdash; ' + c.data + ' ' + c.hora;
+            
+            if (jaAtesa) {
+                // Estat visual nou: Cita tancada amb èxit pel metge
+                html += ' <span class="badge-status" style="background:#e0e7ff; color:#4f46e5;">ATESA COMPLETAMENT</span></span>';
+                html += '<span style="color: var(--success); font-weight:700; font-size:13px; display:flex; align-items:center; gap:4px;">'
+                      + '<svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--success);"><path d="M5 13l4 4L19 7"></path></svg> Historial tancat</span>';
+            } else if (estatNet === 'finalitzada') {
+                html += ' <span class="badge-status status-finalitzada">FINALITZADA</span></span>';
+                html += '<button class="btn-verd" style="padding:4px 10px; font-size:12px;" '
+                      + 'onclick="obrirDiagnostic(\'' + c.codi_cita + '\')">+ Diagnòstic</button>';
+            } else {
+                html += ' <span class="badge-status status-pendent">PENDENT</span></span>';
+                html += '<button class="btn-blau" style="padding:4px 10px; font-size:12px; background:#2980b9;" '
+                      + 'onclick="finalitzarVisitaMedica(\'' + c.codi_cita + '\')">Finalitzar Visita</button>';
             }
+            html += '</div>';
+        });
+        if (!html) html = '<p style="color:#999; padding:10px 0;">Cap cita amb aquest metge.</p>';
+        document.getElementById('llista-cites').innerHTML = html;
+        mostrar('sec-pacient');
 
-            var h = data.historial;
-            document.getElementById('nom-pacient').textContent = h.nom_pacient;
-            document.getElementById('info-pacient').innerHTML =
-                '<b>Grup sanguini:</b> ' + h.grup_sanguini +
-                ' &nbsp;|&nbsp; <b>Al·lèrgies:</b> ' + (h.allergies || 'Cap') +
-                ' &nbsp;|&nbsp; <b>Malalties cròniques:</b> ' + (h.malalties_croniques || 'Cap');
-
-            var cites = data.historial_clinic_complet || [];
-            var html  = '';
-            cites.forEach(function(c) {
-                var estatNet = c.estat.toLowerCase();
-                var cls = 'cita-item ' + (estatNet === 'finalitzada' ? 'finalitzada' : '');
-                
-                html += '<div class="' + cls + '">';
-                html += '<span><b>' + c.codi_cita + '</b> &mdash; ' + c.data + ' ' + c.hora;
-                
-                if (estatNet === 'finalitzada') {
-                    html += ' <span class="badge-status status-finalitzada">FINALITZADA</span></span>';
-                    html += '<button class="btn-verd" style="padding:4px 10px; font-size:12px;" '
-                          + 'onclick="obrirDiagnostic(\'' + c.codi_cita + '\')">+ Diagnòstic</button>';
-                } else {
-                    html += ' <span class="badge-status status-pendent">PENDENT</span></span>';
-                    html += '<button class="btn-blau" style="padding:4px 10px; font-size:12px; background:#2980b9;" '
-                          + 'onclick="finalitzarVisitaMedica(\'' + c.codi_cita + '\')">Finalitzar Visita</button>';
-                }
-                html += '</div>';
-            });
-            if (!html) html = '<p style="color:#999; padding:10px 0;">Cap cita amb aquest metge.</p>';
-            document.getElementById('llista-cites').innerHTML = html;
-            mostrar('sec-pacient');
-
-        } catch(e) { alert('Error de connexió amb el servidor.'); }
-    }
+    } catch(e) { alert('Error de connexió amb el servidor.'); }
+}
 
     // ── B: Transició d'estat: Pendent ➔ Finalitzada ────────────────────────────
     async function finalitzarVisitaMedica(codiCita) {
@@ -453,7 +466,7 @@
     function obrirDiagnostic(codiCita) {
         codiCitaActual = codiCita;
         document.getElementById('lbl-cita-diag').textContent = "Cita: " + codiCita;
-        document.getElementById('codi-diag').value = genCodi('DIAG-', 5);
+        document.getElementById('codi-diag').value = genCodi('DG', 8);
         document.getElementById('desc-diag').value = '';
         document.getElementById('notes-diag').value = '';
         document.getElementById('msg-diag').textContent = '';
@@ -485,7 +498,7 @@
                 
                 // Configurar i obrir secció tractament
                 document.getElementById('lbl-diag-trac').textContent = "Diagnòstic: " + codiDiag;
-                document.getElementById('codi-trac').value = genCodi('TRAC-', 5);
+                document.getElementById('codi-trac').value = genCodi('TR', 8);
                 document.getElementById('data-inici-trac').valueAsDate = new Date();
                 document.getElementById('data-fi-trac').value = '';
                 document.getElementById('indicacions-trac').value = '';
@@ -496,106 +509,157 @@
     }
 
     async function crearTractament() {
-        var codiTrac = document.getElementById('codi-trac').value;
-        var inici = document.getElementById('data-inici-trac').value;
-        var fi = document.getElementById('data-fi-trac').value;
-        var indicacions = document.getElementById('indicacions-trac').value.trim();
+    var codiTrac = document.getElementById('codi-trac').value;
+    var inici = document.getElementById('data-inici-trac').value;
+    var fi = document.getElementById('data-fi-trac').value;
+    var indicacions = document.getElementById('indicacions-trac').value.trim();
 
-        if (!inici || !fi) { alert('Les dates d’inici i fi són obligatòries.'); return; }
-
-        try {
-            var r = await fetch(API + '/tractaments/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    codi_tractament: codiTrac,
-                    codi_diagnostic: codiDiagActual,
-                    data_inici: inici,
-                    data_fi: fi,
-                    indicacions: indicacions
-                })
-            });
-            var d = await r.json();
-            if (r.status === 200 || d.status === 'èxit') {
-                codiTracActual = codiTrac;
-                document.getElementById('msg-trac').textContent = '✓ Tractament establit.';
-                
-                // Configurar i obrir secció prescripció
-                document.getElementById('lbl-trac-presc').textContent = "Tractament: " + codiTrac;
-                document.getElementById('codi-presc').value = genCodi('PRES-', 5);
-                document.getElementById('cerca-med').value = '';
-                document.getElementById('resultats-med').innerHTML = '';
-                document.getElementById('codi-nacional').value = '';
-                document.getElementById('dosi-presc').value = '';
-                document.getElementById('freq-presc').value = '';
-                document.getElementById('durada-presc').value = '';
-                document.getElementById('msg-presc').textContent = '';
-                mostrar('sec-prescripcio');
-            } else { alert('Error: ' + d.missatge); }
-        } catch(e) { alert('Error de xarxa.'); }
+    if (!inici || !fi) { 
+        alert('Les dates d’inici i fi són obligatòries.'); 
+        return; 
     }
+
+    if (!codiDiagActual) {
+        alert('Falta el codi de diagnòstic de l’acció anterior.');
+        return;
+    }
+
+    // CONSTRUCCIÓ PERFECTA PER AL TEU DJANGO
+    var dadesAEnviar = {
+        codi_tractament: codiTrac,
+        data_inici: inici,
+        data_fi_prevista: fi,      // <--- CAMBIAT: Abans deies 'data_fi'
+        indicacions: indicacions,
+        codi_diagnostic: codiDiagActual
+    };
+
+    try {
+        var r = await fetch(API + '/tractaments/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(dadesAEnviar)
+        });
+
+        var d = await r.json();
+        
+        // El teu Django respon amb status 'success' i codi 201
+        if (r.status === 201 || d.status === 'success' || r.status === 200) {
+            
+            // El teu Django retorna la clau dins de d.data.codi_tractament
+            codiTracActual = (d.data && d.data.codi_tractament) ? d.data.codi_tractament : codiTrac;
+            
+            document.getElementById('msg-trac').textContent = '✓ Tractament establit.';
+            
+            // Configurar i obrir secció prescripció
+            document.getElementById('lbl-trac-presc').textContent = "Tractament: " + codiTracActual;
+            document.getElementById('codi-presc').value = genCodi('PRE', 8);
+            document.getElementById('cerca-med').value = '';
+            document.getElementById('resultats-med').innerHTML = '';
+            document.getElementById('codi-nacional').value = '';
+            document.getElementById('dosi-presc').value = '';
+            document.getElementById('freq-presc').value = '';
+            document.getElementById('durada-presc').value = '';
+            document.getElementById('msg-presc').textContent = '';
+            mostrar('sec-prescripcio');
+        } else { 
+            alert('Error del backend a tractaments: ' + (d.message || d.missatge)); 
+        }
+    } catch(e) { 
+        alert('Error de xarxa en connectar amb el servidor de tractaments.'); 
+    }
+}
 
     async function cercarMedicament() {
-        var text = document.getElementById('cerca-med').value.trim();
-        if (!text) { alert('Escriu un nom de medicament.'); return; }
-        try {
-            var r = await fetch(API + '/medicaments/?nom=' + encodeURIComponent(text));
-            var d = await r.json();
-            var div = document.getElementById('resultats-med');
-            div.innerHTML = '';
+    var text = document.getElementById('cerca-med').value.trim();
+    if (!text) { alert('Escriu un nom de medicament.'); return; }
+    
+    try {
+        // CORRECCIÓ CLAU: Enviem 'nom_comercial' tal com el demana el teu Django
+        var r = await fetch(API + '/medicaments/?nom_comercial=' + encodeURIComponent(text));
+        var d = await r.json();
+        
+        var div = document.getElementById('resultats-med');
+        div.innerHTML = '';
 
-            var meds = d.medicaments || [];
-            if (meds.length === 0) { div.innerHTML = '<p style="color:var(--danger)">Cap medicament trobat al Vademècum.</p>'; return; }
+        var meds = d.medicaments || [];
+        if (meds.length === 0) { 
+            div.innerHTML = '<p style="color:var(--danger); font-weight:600;">⚠️ Cap medicament trobat al Vademècum.</p>'; 
+            return; 
+        }
 
-            meds.forEach(function(m) {
-                var p = document.createElement('p');
-                p.style.cssText = 'background:var(--gray-50); padding:6px; margin:4px 0; border-radius:4px; cursor:pointer; font-size:0.9rem; border:1px solid var(--gray-200);';
-                p.textContent = m.codi_nacional + " - " + m.nom_comercial + " (" + m.presentacio + ")";
-                p.onclick = function() {
-                    document.getElementById('codi-nacional').value = m.codi_nacional;
-                    div.innerHTML = '<p style="color:var(--success); font-weight:600;">✓ Seleccionat: ' + m.nom_comercial + '</p>';
-                };
-                div.appendChild(p);
-            });
-        } catch(e) { alert('Error cercant medicaments.'); }
+        // LIMITEM A UN MÀXIM DE 5 RESULTATS VISUALS PER NO SATURAR LA PANTALLA
+        var resultatsFiltrats = meds.slice(0, 5);
+
+        resultatsFiltrats.forEach(function(m) {
+            var p = document.createElement('p');
+            p.style.cssText = 'background:var(--gray-50); padding:8px; margin:6px 0; border-radius:6px; cursor:pointer; font-size:0.9rem; border:1px solid var(--gray-200); transition: background 0.2s;';
+            
+            // Efecte hover visual simple per saber on es fa clic
+            p.onmouseover = function() { this.style.background = '#f3f4f6'; };
+            p.onmouseout = function() { this.style.background = 'var(--gray-50)'; };
+            
+            // Utilitzem 'principi_actiu' que és el camp que retorna el teu Django
+            p.textContent = m.codi_nacional + " - " + m.nom_comercial + " (" + (m.principi_actiu || 'Sense principi actiu') + ")";
+            
+            p.onclick = function() {
+                // Al fer clic, guardem el codi nacional a l'input ocult/corresponent
+                document.getElementById('codi-nacional').value = m.codi_nacional;
+                div.innerHTML = '<p style="color:var(--success); font-weight:600; padding:4px 0;">✓ Seleccionat: ' + m.nom_comercial + '</p>';
+            };
+            div.appendChild(p);
+        });
+    } catch(e) { 
+        alert('Error cercant medicaments al servidor.'); 
     }
+}
 
     async function crearPrescripcio() {
-        var codiPresc = document.getElementById('codi-presc').value;
-        var cn = document.getElementById('codi-nacional').value;
-        var dosi = document.getElementById('dosi-presc').value.trim();
-        var freq = document.getElementById('freq-presc').value.trim();
-        var durada = document.getElementById('durada-presc').value.trim();
+    var codiPresc = document.getElementById('codi-presc').value;
+    var cn = document.getElementById('codi-nacional').value;
+    var dosi = document.getElementById('dosi-presc').value.trim();
+    var freq = document.getElementById('freq-presc').value.trim();
+    var durada = document.getElementById('durada-presc').value.trim();
 
-        if (!cn || !dosi || !freq || !durada) { alert('Emplena totes les dades de la recepta receptada.'); return; }
+    if (!cn || !dosi || !freq || !durada) { alert('Emplena totes les dades de la recepta.'); return; }
+    if (!codiTracActual) { alert('Error de continuïtat: No es troba el codi de tractament actiu.'); return; }
 
-        try {
-            var r = await fetch(API + '/prescripcions/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    codi_prescripcio: codiPresc,
-                    codi_tractament: codiTracActual,
-                    codi_nacional: cn,
-                    dosi: dosi,
-                    frequencia: freq,
-                    durada: durada
-                })
-            });
-            var d = await r.json();
-            if (r.status === 200 || d.status === 'èxit') {
-                var m = document.getElementById('msg-presc');
-                m.style.color = 'var(--success)';
-                m.textContent = '✓ Recepta validada i transmesa a la targeta sanitària rectament!';
-                setTimeout(function() {
-                    tancarSeccio('sec-diagnostic');
-                    tancarSeccio('sec-tractament');
-                    tancarSeccio('sec-prescripcio');
-                    carregarPacient();
-                }, 2000);
-            } else { alert('Error: ' + d.missatge); }
-        } catch(e) { alert('Error de xarxa.'); }
-    }
+    try {
+        var r = await fetch(API + '/prescripcions/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                codi_prescripcio: codiPresc,
+                codi_tractament: codiTracActual,
+                codi_nacional: cn,
+                dosi: dosi,
+                frequencia: freq,
+                durada: durada
+            })
+        });
+        var d = await r.json();
+        if (r.status === 200 || r.status === 201 || d.status === 'èxit' || d.status === 'success') {
+            var m = document.getElementById('msg-presc');
+            m.style.color = 'var(--success)';
+            m.textContent = '✓ Recepta validada i transmesa a la targeta sanitària correctament!';
+            
+            // ── CANVI AQUÍ: DESEM EL CODI DE LA CITA COM A TOTALMENT COMPLETAT ──
+            if (codiCitaActual) {
+                var completes = JSON.parse(localStorage.getItem('cites_completades') || '[]');
+                if (!completes.includes(codiCitaActual)) {
+                    completes.push(codiCitaActual);
+                    localStorage.setItem('cites_completades', JSON.stringify(completes));
+                }
+            }
+
+            setTimeout(function() {
+                tancarSeccio('sec-diagnostic');
+                tancarSeccio('sec-tractament');
+                tancarSeccio('sec-prescripcio');
+                carregarPacient(); // Torna a carregar i aplicarà el canvi visual immediatament
+            }, 2000);
+        } else { alert('Error del servidor a la prescripció: ' + (d.missatge || d.message)); }
+    } catch(e) { alert('Error de xarxa o validació en emetre la prescripció.'); }
+}
   </script>
 </body>
 </html>
