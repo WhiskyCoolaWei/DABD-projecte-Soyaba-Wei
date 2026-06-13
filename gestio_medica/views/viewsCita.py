@@ -80,7 +80,7 @@ def crearCitaController(request):
         dni_metge = dades.get('dni_metge')
         codi_centre = dades.get('codi_centre')
         codi_sala = dades.get('codi_sala', 'SALA-GEN')
-        estat = 'pendent'
+        estat = 'confirmada'
 
         if not all([codi_cita, data_str, hora_str, estat, dni_metge, dni_pacient, codi_centre, codi_sala]):
             return JsonResponse({"status": "error_validacio", "missatge": "Falten camps obligatoris"}, status=400)

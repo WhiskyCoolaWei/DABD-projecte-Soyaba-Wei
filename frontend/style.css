@@ -1,0 +1,183 @@
+/* ============================================================
+   HealthLog — Estils compartits per a totes les pantalles
+   Mateixa paleta i llenguatge visual que dashboard.html /
+   dashboardPacient.html. Es pot enllaçar amb:
+     <link rel="stylesheet" href="style.css">
+   ============================================================ */
+
+:root {
+  --blau-dark: #1a5276;
+  --blau:      #2874a6;
+  --verd-dark: #1e8449;
+  --verd:      #27ae60;
+  --taronja-dark: #b7950b;
+  --taronja:   #d4ac0d;
+  --vermell-dark: #922b21;
+  --vermell:   #c0392b;
+  --ink:       #2c3e50;
+  --muted:     #8794a3;
+  --bg:        #eef2f7;
+  --line:      #e3edf6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 30px 20px 60px;
+  line-height: 1.6;
+}
+
+h1 {
+  background: linear-gradient(135deg, var(--blau-dark), var(--blau)) !important;
+  color: white !important;
+  margin: 0 0 22px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 21px;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+h2 {
+  color: var(--blau-dark);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line);
+}
+
+h3 {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+hr { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
+
+a { color: var(--blau-dark); text-decoration: none; font-weight: 600; }
+a:hover { text-decoration: underline; }
+
+/* Cada <form> es presenta com una targeta. Les pagines amb el seu
+   propi .card poden anul·lar-ho amb style="background:transparent;
+   box-shadow:none;padding:0;margin:0" */
+form, .card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 20px 24px;
+  margin-bottom: 18px;
+}
+
+/* Capcalera de targeta opcional (per a pagines noves que en facin us) */
+.card-header {
+  margin: -20px -24px 18px;
+  padding: 14px 24px;
+  border-radius: 12px 12px 0 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-header.blau    { background: linear-gradient(135deg, var(--blau-dark), var(--blau)); }
+.card-header.verd    { background: linear-gradient(135deg, var(--verd-dark), var(--verd)); }
+.card-header.taronja { background: linear-gradient(135deg, var(--taronja-dark), var(--taronja)); }
+.card-header h2 { color: white; border: none; margin: 0; font-size: 15px; }
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--muted);
+  margin: 14px 0 6px;
+}
+label:first-child { margin-top: 0; }
+
+input, select, textarea {
+  width: 100%;
+  max-width: 340px;
+  padding: 9px 12px;
+  border: 1px solid #d6dee6;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  text-transform: none;
+  background: #fbfcfe;
+  color: var(--ink);
+}
+textarea { max-width: 100%; min-height: 70px; resize: vertical; }
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--blau);
+  outline-offset: 1px;
+  border-color: var(--blau);
+}
+
+button, input[type="submit"] {
+  display: inline-block;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .2px;
+  text-transform: none;
+  background: var(--blau-dark);
+  color: white;
+  margin-top: 10px;
+}
+button:hover, input[type="submit"]:hover { background: var(--blau); }
+button.btn-verd    { background: var(--verd-dark); }
+button.btn-verd:hover    { background: var(--verd); }
+button.btn-vermell { background: var(--vermell); }
+button.btn-vermell:hover { background: var(--vermell-dark); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Llistes de resultats */
+ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+li {
+  background: #f4f8fc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+li strong { color: var(--blau-dark); }
+.buit, li.buit {
+  background: transparent; border: none; color: #aaa;
+  font-style: italic; font-size: 13px; padding: 8px 0;
+}
+
+/* Taules */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  margin-bottom: 18px;
+}
+th {
+  background: var(--blau-dark); color: white; padding: 10px 12px;
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .4px;
+}
+td { padding: 9px 12px; border-bottom: 1px solid #f0f3f7; font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f7fafd; }
+
+/* Missatges d'estat (id="missatge", id="msg-...", o class="msg") */
+.msg, #missatge, [id^="msg"] { font-weight: 600; font-size: 13px; margin-top: 10px; }
+.ok  { color: var(--verd-dark); }
+.err { color: var(--vermell); }

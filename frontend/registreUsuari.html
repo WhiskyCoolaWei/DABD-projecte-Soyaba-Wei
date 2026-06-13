@@ -2,19 +2,70 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
   <title>HealthLog – Registre</title>
+  <style>
+    body {
+      min-height: 100vh;
+      max-width: none;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(30,132,73,0.15);
+      padding: 32px 38px;
+    }
+    .auth-header {
+      margin: -32px -38px 26px;
+      padding: 28px 38px;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(135deg, var(--verd-dark), var(--verd));
+      color: white;
+    }
+    .auth-header h2 { font-size: 27px; font-weight: 700; border: none; margin: 0; color: white; }
+    .auth-header span { font-size: 13px; opacity: .85; }
+    .auth-card h3 {
+      font-size: 18px; font-weight: 600; color: var(--ink);
+      text-transform: none; letter-spacing: normal; margin-bottom: 20px;
+    }
+    .auth-card label { font-size: 12px; margin: 16px 0 7px; }
+    .auth-card input { font-size: 15px; padding: 12px 14px; max-width: 100%; }
+    .auth-card button { font-size: 14px; padding: 13px 22px; margin-top: 18px; }
+    .auth-card hr { margin: 26px 0; }
+    .auth-card .switch { text-align: center; font-size: 13px; color: var(--muted); }
+  </style>
 </head>
 <body>
-  <h1>HealthLog – Registre d'usuari</h1>
-  <form id="registreForm">
-    <label>DNI (persona existent):<br><input type="text" id="dni" required></label><br><br>
-    <label>Email:<br><input type="email" id="email" required></label><br><br>
-    <label>Contrasenya:<br><input type="password" id="contrasenya" required></label><br><br>
-    <button type="submit">Registrar</button>
-  </form>
-  <p id="missatge"></p>
-  <hr>
-  <p><a href="login.html">Ja tens compte? Inicia sessió</a></p>
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>HealthLog</h2>
+      <span>Crear compte d'usuari</span>
+    </div>
+    <h3>Registre</h3>
+    <form id="registreForm" style="background:transparent;box-shadow:none;padding:0;margin:0">
+      <label for="dni">DNI (persona existent)</label>
+      <input type="text" id="dni" required
+             oninput="this.value=this.value.toUpperCase()">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required>
+
+      <label for="contrasenya">Contrasenya</label>
+      <input type="password" id="contrasenya" required>
+
+      <button type="submit" class="btn-verd" style="width:100%">Registrar</button>
+    </form>
+    <p id="missatge" class="msg"></p>
+    <hr>
+    <p class="switch">Ja tens compte? <a href="login.html">Inicia sessio</a></p>
+  </div>
 
   <script>
     const API = 'http://localhost:8000';
@@ -32,10 +83,10 @@
       const data = await res.json();
       const msg  = document.getElementById('missatge');
       if (data.status === 'èxit') {
-        msg.style.color = 'green';
+        msg.className = 'msg ok';
         msg.textContent = data.missatge;
       } else {
-        msg.style.color = 'red';
+        msg.className = 'msg err';
         msg.textContent = data.missatge;
       }
     });

@@ -137,8 +137,16 @@
 <script>
 var API    = 'http://127.0.0.1:8000';
 var usuari = JSON.parse(localStorage.getItem('usuari') || 'null');
-if (!usuari) window.location.href = 'login.html';
-document.getElementById('nom-user').textContent = usuari.nom;
+if (!usuari || !usuari.dni) { window.location.href = 'login.html'; }
+// Guarda de rol: si aquest compte no te rol de pacient, no pertany a aquest portal
+if (usuari && (!usuari.rols || usuari.rols.indexOf('pacient') === -1)) { window.location.href = 'dashboard.html'; }
+document.getElementById('nom-user').textContent = usuari ? usuari.nom : '';
+
+// El link "Tornar al dashboard" nomes te sentit si tambe ets metge (overlapping)
+if (usuari && (!usuari.rols || usuari.rols.indexOf('metge') === -1)) {
+    var back = document.querySelector('.back');
+    if (back) back.style.display = 'none';
+}
 
 async function carregarHistorial() {
     try {

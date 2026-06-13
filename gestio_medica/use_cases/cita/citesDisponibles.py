@@ -23,7 +23,7 @@ def slotsDisponibles(dni_metge: str, data_str: str, codi_centre: str):
         Cita.objects.filter(
             dni_metge_id = dni_metge,
             data         = data
-        ).exclude(estat='cancelada').values_list('hora', flat=True)
+        ).exclude(estat='cancel·lada').values_list('hora', flat=True)
     )
 
     # Genera slots d'1h per cada torn i filtra les ocupades

@@ -7,8 +7,7 @@ def citesDelMetge(dni_metge: str):
     return list(
         Cita.objects.filter(
             dni_metge_id = dni_metge,
-            data__gte    = avui
-        ).exclude(
-            estat = 'cancelada'
+            data__gte    = avui,
+            estat__in    = ['pendent', 'confirmada']
         ).order_by('data', 'hora')
     )

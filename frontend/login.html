@@ -2,18 +2,66 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
   <title>HealthLog – Login</title>
+  <style>
+    body {
+      min-height: 100vh;
+      max-width: none;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(26,82,118,0.15);
+      padding: 32px 38px;
+    }
+    .auth-header {
+      margin: -32px -38px 26px;
+      padding: 28px 38px;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(135deg, var(--blau-dark), var(--blau));
+      color: white;
+    }
+    .auth-header h2 { font-size: 27px; font-weight: 700; border: none; margin: 0; color: white; }
+    .auth-header span { font-size: 13px; opacity: .85; }
+    .auth-card h3 {
+      font-size: 18px; font-weight: 600; color: var(--ink);
+      text-transform: none; letter-spacing: normal; margin-bottom: 20px;
+    }
+    .auth-card label { font-size: 12px; margin: 16px 0 7px; }
+    .auth-card input { font-size: 15px; padding: 12px 14px; max-width: 100%; }
+    .auth-card button { font-size: 14px; padding: 13px 22px; margin-top: 18px; }
+    .auth-card hr { margin: 26px 0; }
+    .auth-card .switch { text-align: center; font-size: 13px; color: var(--muted); }
+  </style>
 </head>
 <body>
-  <h1>HealthLog – Iniciar sessio</h1>
-  <form id="loginForm">
-    <label>Email:<br><input type="email" id="email" required></label><br><br>
-    <label>Contrasenya:<br><input type="password" id="contrasenya" required></label><br><br>
-    <button type="submit">Entrar</button>
-  </form>
-  <p id="missatge" style="color:red"></p>
-  <hr>
-  <p><a href="registreUsuari.html">No tens compte? Registra't</a></p>
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>HealthLog</h2>
+      <span>Sistema de gestio medica</span>
+    </div>
+    <h3>Iniciar sessio</h3>
+    <form id="loginForm" style="background:transparent;box-shadow:none;padding:0;margin:0">
+      <label for="email">Email</label>
+      <input type="email" id="email" required>
+
+      <label for="contrasenya">Contrasenya</label>
+      <input type="password" id="contrasenya" required>
+
+      <button type="submit" style="width:100%">Entrar</button>
+    </form>
+    <p id="missatge" class="msg err"></p>
+    <hr>
+    <p class="switch">No tens compte? <a href="registreUsuari.html">Registra't</a></p>
+  </div>
 
   <script>
     const API = 'http://localhost:8000';
